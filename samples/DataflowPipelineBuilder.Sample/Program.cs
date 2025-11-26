@@ -6,9 +6,20 @@ Console.WriteLine("=== DataflowPipelineBuilder Sample ===\n");
 Console.WriteLine("Example 1: Simple Transform Pipeline");
 Console.WriteLine("-------------------------------------");
 
+var r = new Random();
+
 await using var transformPipeline = new DataflowPipelineBuilder()
-    .AddBufferBlock<int>()
-    .AddTransformBlock<string>(x => $"Number: {x}")
+    .AddBufferBlock<int>(options: new System.Threading.Tasks.Dataflow.DataflowBlockOptions
+    {
+        BoundedCapacity = 100
+    })
+    .AddTransformBlock<string>(async(x) => {
+        await Task.Delay(r.Next(50, 2000));
+        return $"Number: {x}";
+    }, options: new System.Threading.Tasks.Dataflow.ExecutionDataflowBlockOptions
+    {
+        MaxDegreeOfParallelism = 50
+    })
     .Build();
 
 for (int i = 1; i <= 5; i++)

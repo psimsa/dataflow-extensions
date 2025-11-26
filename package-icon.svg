@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <!-- Define gradients -->
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0066FF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0047B2;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="grad2" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#00D4FF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0099FF;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="256" height="256" fill="#FFFFFF"/>
+  
+  <!-- Left block (input) -->
+  <rect x="20" y="100" width="40" height="56" rx="6" fill="url(#grad1)" />
+  <circle cx="30" cy="128" r="8" fill="#FFFFFF" opacity="0.3" />
+  
+  <!-- Arrow 1 -->
+  <line x1="65" y1="120" x2="90" y2="110" stroke="url(#grad2)" stroke-width="4" stroke-linecap="round" />
+  <polygon points="95,107 88,105 92,115" fill="url(#grad2)" />
+  
+  <!-- Middle block (processing) -->
+  <rect x="90" y="95" width="50" height="66" rx="6" fill="url(#grad1)" />
+  <circle cx="115" cy="128" r="8" fill="#FFFFFF" opacity="0.3" />
+  <circle cx="105" cy="125" r="3" fill="#FFFFFF" opacity="0.5" />
+  <circle cx="125" cy="132" r="3" fill="#FFFFFF" opacity="0.5" />
+  
+  <!-- Arrow 2 -->
+  <line x1="145" y1="115" x2="165" y2="130" stroke="url(#grad2)" stroke-width="4" stroke-linecap="round" />
+  <polygon points="170,135 165,127 162,138" fill="url(#grad2)" />
+  
+  <!-- Right block (output) -->
+  <rect x="170" y="100" width="40" height="56" rx="6" fill="url(#grad1)" />
+  <circle cx="190" cy="128" r="8" fill="#FFFFFF" opacity="0.3" />
+  
+  <!-- Top flowing elements (representing data flow) -->
+  <circle cx="50" cy="50" r="5" fill="url(#grad2)" opacity="0.7" />
+  <circle cx="115" cy="45" r="5" fill="url(#grad2)" opacity="0.7" />
+  <circle cx="190" cy="55" r="5" fill="url(#grad2)" opacity="0.7" />
+  
+  <!-- Flow lines connecting top elements -->
+  <path d="M 55 47 Q 85 40 110 42" stroke="url(#grad2)" stroke-width="2" fill="none" opacity="0.5" stroke-dasharray="3,3" />
+  <path d="M 120 42 Q 155 48 185 52" stroke="url(#grad2)" stroke-width="2" fill="none" opacity="0.5" stroke-dasharray="3,3" />
+  
+  <!-- Bottom flowing elements -->
+  <circle cx="45" cy="210" r="4" fill="url(#grad2)" opacity="0.6" />
+  <circle cx="128" cy="215" r="4" fill="url(#grad2)" opacity="0.6" />
+  <circle cx="200" cy="205" r="4" fill="url(#grad2)" opacity="0.6" />
+  
+  <!-- Highlight/shine effect on blocks -->
+  <rect x="20" y="100" width="40" height="12" rx="6" fill="#FFFFFF" opacity="0.15" />
+  <rect x="90" y="95" width="50" height="12" rx="6" fill="#FFFFFF" opacity="0.15" />
+  <rect x="170" y="100" width="40" height="12" rx="6" fill="#FFFFFF" opacity="0.15" />
+</svg>

@@ -1,5 +1,6 @@
 using System.Threading.Tasks.Dataflow;
 using Tpl.Dataflow.Builder.Abstractions;
+using Tpl.Dataflow.Builder.Blocks;
 
 namespace Tpl.Dataflow.Builder;
 

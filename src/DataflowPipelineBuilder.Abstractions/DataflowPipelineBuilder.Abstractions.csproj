@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
@@ -11,12 +11,18 @@
     <PackageId>Tpl.Dataflow.Builder.Abstractions</PackageId>
     <Version>1.0.0</Version>
     <Authors>psimsa</Authors>
-    <Description>Abstractions and interfaces for Tpl.Dataflow.Builder - a fluent builder for TPL Dataflow pipelines.</Description>
+    <Description>Abstractions and interfaces for Tpl.Dataflow.Builder - a fluent builder for TPL
+      Dataflow pipelines.</Description>
     <PackageTags>dataflow;tpl;pipeline;builder;abstractions</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/psimsa/dataflow-extensions</PackageProjectUrl>
     <RepositoryUrl>https://github.com/psimsa/dataflow-extensions</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>package-icon.png</PackageIcon>
+
+    <!-- App settings -->
+    <RootNamespace>Tpl.Dataflow.Builder.Abstractions</RootNamespace>
 
     <!-- Build Settings -->
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -26,6 +32,11 @@
 
   <ItemGroup>
     <PackageReference Include="System.Threading.Tasks.Dataflow" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\package-icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,6 @@
+using System.Threading.Channels;
 using System.Threading.Tasks.Dataflow;
+using Tpl.Dataflow.Builder.Blocks;
 
 namespace Tpl.Dataflow.Builder;
 
@@ -68,10 +70,36 @@ internal static class DataflowBuilderHelpers
 
     /// <summary>
     /// Applies the default cancellation token to execution block options if not already set.
+    /// Also applies the ensureOrdered setting.
+    /// </summary>
+    /// <param name="options">The options to modify (may be null).</param>
+    /// <param name="defaultCancellationToken">The default cancellation token.</param>
+    /// <param name="ensureOrdered">Whether to preserve input order in output. Default is false for better parallel performance.</param>
+    /// <returns>The modified options, or a new instance if options was null.</returns>
+    public static ExecutionDataflowBlockOptions ApplyExecutionOptions(
+        ExecutionDataflowBlockOptions? options,
+        CancellationToken defaultCancellationToken,
+        bool ensureOrdered)
+    {
+        options ??= new ExecutionDataflowBlockOptions();
+
+        options.EnsureOrdered = ensureOrdered;
+
+        if (defaultCancellationToken != default && options.CancellationToken == default)
+        {
+            options.CancellationToken = defaultCancellationToken;
+        }
+
+        return options;
+    }
+
+    /// <summary>
+    /// Applies the default cancellation token to execution block options if not already set.
     /// </summary>
     /// <param name="options">The options to modify (may be null).</param>
     /// <param name="defaultCancellationToken">The default cancellation token.</param>
     /// <returns>The modified options, or null if no changes were needed.</returns>
+    [Obsolete("Use ApplyExecutionOptions instead to also set EnsureOrdered.")]
     public static ExecutionDataflowBlockOptions? ApplyCancellationToken(
         ExecutionDataflowBlockOptions? options,
         CancellationToken defaultCancellationToken)
@@ -180,5 +208,92 @@ internal static class DataflowBuilderHelpers
             Index = index,
             LinkToNext = linkToNext
         });
+    }
+
+    /// <summary>
+    /// Starts a background task that pumps items from a ChannelReader to a target block.
+    /// </summary>
+    /// <typeparam name="T">The type of items being pumped.</typeparam>
+    /// <param name="reader">The channel reader to consume from.</param>
+    /// <param name="target">The target block to post items to.</param>
+    /// <param name="cancellationToken">Cancellation token to stop the pumping task.</param>
+    /// <remarks>
+    /// The task completes the target block when the channel reader completes.
+    /// If an exception occurs, the target block is faulted.
+    /// </remarks>
+    public static void StartChannelPumpingTask<T>(
+        ChannelReader<T> reader,
+        ITargetBlock<T> target,
+        CancellationToken cancellationToken)
+    {
+        _ = PumpChannelToBlockAsync(reader, target, cancellationToken);
+    }
+
+    private static async Task PumpChannelToBlockAsync<T>(
+        ChannelReader<T> reader,
+        ITargetBlock<T> target,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            while (await reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
+            {
+                while (reader.TryRead(out var item))
+                {
+                    await target.SendAsync(item, cancellationToken).ConfigureAwait(false);
+                }
+            }
+
+            target.Complete();
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            target.Complete();
+        }
+        catch (Exception ex)
+        {
+            ((IDataflowBlock)target).Fault(ex);
+        }
+    }
+
+    /// <summary>
+    /// Creates a channel and an ActionBlock that writes to it.
+    /// </summary>
+    /// <typeparam name="T">The type of items.</typeparam>
+    /// <param name="options">Bounded channel options, or null for unbounded.</param>
+    /// <param name="cancellationToken">Cancellation token for the action block.</param>
+    /// <returns>A tuple containing the ActionBlock and the ChannelReader.</returns>
+    public static (ActionBlock<T> Block, ChannelReader<T> Reader) CreateChannelOutputBlock<T>(
+        BoundedChannelOptions? options,
+        CancellationToken cancellationToken)
+    {
+        var channel = options is null
+            ? Channel.CreateUnbounded<T>()
+            : Channel.CreateBounded<T>(options);
+
+        var writer = channel.Writer;
+
+        var actionBlock = new ActionBlock<T>(
+            async item => await writer.WriteAsync(item).ConfigureAwait(false),
+            new ExecutionDataflowBlockOptions
+            {
+                CancellationToken = cancellationToken
+            });
+
+        actionBlock.Completion.ContinueWith(
+            task =>
+            {
+                if (task.IsFaulted)
+                {
+                    writer.Complete(task.Exception?.InnerException);
+                }
+                else
+                {
+                    writer.Complete();
+                }
+            },
+            TaskScheduler.Default);
+
+        return (actionBlock, channel.Reader);
     }
 }
