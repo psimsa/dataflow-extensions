@@ -38,7 +38,8 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
     {
         options = ApplyCancellationToken(options);
         var block = new BufferBlock<TOutput>(options ?? new DataflowBlockOptions());
-        AddBlock(name, block, typeof(TOutput), typeof(TOutput));
+        AddBlock(name, block, typeof(TOutput), typeof(TOutput),
+            (target, linkOptions) => block.LinkTo((ITargetBlock<TOutput>)target, linkOptions));
 
         return this;
     }
@@ -60,7 +61,8 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
 
         options = ApplyCancellationToken(options);
         var block = new TransformBlock<TOutput, TNewOutput>(transform, options ?? new ExecutionDataflowBlockOptions());
-        AddBlock(name, block, typeof(TOutput), typeof(TNewOutput));
+        AddBlock(name, block, typeof(TOutput), typeof(TNewOutput),
+            (target, linkOptions) => block.LinkTo((ITargetBlock<TNewOutput>)target, linkOptions));
 
         return new DataflowPipelineBuilder<TInput, TNewOutput>(_defaultLinkOptions, _defaultCancellationToken, _blocks);
     }
@@ -82,7 +84,8 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
 
         options = ApplyCancellationToken(options);
         var block = new TransformBlock<TOutput, TNewOutput>(transform, options ?? new ExecutionDataflowBlockOptions());
-        AddBlock(name, block, typeof(TOutput), typeof(TNewOutput));
+        AddBlock(name, block, typeof(TOutput), typeof(TNewOutput),
+            (target, linkOptions) => block.LinkTo((ITargetBlock<TNewOutput>)target, linkOptions));
 
         return new DataflowPipelineBuilder<TInput, TNewOutput>(_defaultLinkOptions, _defaultCancellationToken, _blocks);
     }
@@ -104,7 +107,8 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
 
         options = ApplyCancellationToken(options);
         var block = new TransformManyBlock<TOutput, TNewOutput>(transform, options ?? new ExecutionDataflowBlockOptions());
-        AddBlock(name, block, typeof(TOutput), typeof(TNewOutput));
+        AddBlock(name, block, typeof(TOutput), typeof(TNewOutput),
+            (target, linkOptions) => block.LinkTo((ITargetBlock<TNewOutput>)target, linkOptions));
 
         return new DataflowPipelineBuilder<TInput, TNewOutput>(_defaultLinkOptions, _defaultCancellationToken, _blocks);
     }
@@ -126,7 +130,8 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
 
         options = ApplyCancellationToken(options);
         var block = new TransformManyBlock<TOutput, TNewOutput>(transform, options ?? new ExecutionDataflowBlockOptions());
-        AddBlock(name, block, typeof(TOutput), typeof(TNewOutput));
+        AddBlock(name, block, typeof(TOutput), typeof(TNewOutput),
+            (target, linkOptions) => block.LinkTo((ITargetBlock<TNewOutput>)target, linkOptions));
 
         return new DataflowPipelineBuilder<TInput, TNewOutput>(_defaultLinkOptions, _defaultCancellationToken, _blocks);
     }
@@ -150,7 +155,8 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
 
         options = ApplyCancellationToken(options);
         var block = new BatchBlock<TOutput>(batchSize, options ?? new GroupingDataflowBlockOptions());
-        AddBlock(name, block, typeof(TOutput), typeof(TOutput[]));
+        AddBlock(name, block, typeof(TOutput), typeof(TOutput[]),
+            (target, linkOptions) => block.LinkTo((ITargetBlock<TOutput[]>)target, linkOptions));
 
         return new DataflowPipelineBuilder<TInput, TOutput[]>(_defaultLinkOptions, _defaultCancellationToken, _blocks);
     }
@@ -168,7 +174,8 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
     {
         ArgumentNullException.ThrowIfNull(block);
 
-        AddBlock(name, block, typeof(TOutput), typeof(TNewOutput));
+        AddBlock(name, block, typeof(TOutput), typeof(TNewOutput),
+            (target, linkOptions) => block.LinkTo((ITargetBlock<TNewOutput>)target, linkOptions));
 
         return new DataflowPipelineBuilder<TInput, TNewOutput>(_defaultLinkOptions, _defaultCancellationToken, _blocks);
     }
@@ -187,7 +194,8 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
         ArgumentNullException.ThrowIfNull(factory);
 
         var block = factory();
-        AddBlock(name, block, typeof(TOutput), typeof(TNewOutput));
+        AddBlock(name, block, typeof(TOutput), typeof(TNewOutput),
+            (target, linkOptions) => block.LinkTo((ITargetBlock<TNewOutput>)target, linkOptions));
 
         return new DataflowPipelineBuilder<TInput, TNewOutput>(_defaultLinkOptions, _defaultCancellationToken, _blocks);
     }
@@ -208,7 +216,7 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
 
         options = ApplyCancellationToken(options);
         var block = new ActionBlock<TOutput>(action, options ?? new ExecutionDataflowBlockOptions());
-        AddBlock(name, block, typeof(TOutput), outputType: null);
+        AddBlock(name, block, typeof(TOutput), outputType: null, linkToNext: null);
 
         return new DataflowPipelineBuilder<TInput>(_defaultLinkOptions, _defaultCancellationToken, _blocks);
     }
@@ -229,7 +237,7 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
 
         options = ApplyCancellationToken(options);
         var block = new ActionBlock<TOutput>(action, options ?? new ExecutionDataflowBlockOptions());
-        AddBlock(name, block, typeof(TOutput), outputType: null);
+        AddBlock(name, block, typeof(TOutput), outputType: null, linkToNext: null);
 
         return new DataflowPipelineBuilder<TInput>(_defaultLinkOptions, _defaultCancellationToken, _blocks);
     }
@@ -246,7 +254,7 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
             throw new InvalidOperationException("Cannot build an empty pipeline. Add at least one block.");
         }
 
-        LinkBlocks();
+        DataflowBuilderHelpers.LinkBlocks(_blocks, _defaultLinkOptions);
 
         var head = (ITargetBlock<TInput>)_blocks[0].Block;
         var tail = (IReceivableSourceBlock<TOutput>)_blocks[^1].Block;
@@ -255,106 +263,22 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
         return new DataflowPipeline<TInput, TOutput>(head, tail, blocksDictionary);
     }
 
-    private void LinkBlocks()
+    private void AddBlock(
+        string? name,
+        IDataflowBlock block,
+        Type inputType,
+        Type? outputType,
+        Action<IDataflowBlock, DataflowLinkOptions>? linkToNext = null)
     {
-        for (var i = 0; i < _blocks.Count - 1; i++)
-        {
-            var source = _blocks[i];
-            var target = _blocks[i + 1];
-
-            LinkBlocksDynamic(source.Block, target.Block, source.OutputType!, target.InputType);
-        }
+        DataflowBuilderHelpers.AddBlock(_blocks, _blockNames, name, block, inputType, outputType, linkToNext);
     }
 
-    private void LinkBlocksDynamic(IDataflowBlock source, IDataflowBlock target, Type outputType, Type inputType)
-    {
-        var sourceType = typeof(ISourceBlock<>).MakeGenericType(outputType);
-        var targetType = typeof(ITargetBlock<>).MakeGenericType(outputType);
+    private DataflowBlockOptions? ApplyCancellationToken(DataflowBlockOptions? options) =>
+        DataflowBuilderHelpers.ApplyCancellationToken(options, _defaultCancellationToken);
 
-        var linkToMethod = sourceType.GetMethod(
-            nameof(ISourceBlock<object>.LinkTo),
-            [targetType, typeof(DataflowLinkOptions)]);
+    private ExecutionDataflowBlockOptions? ApplyCancellationToken(ExecutionDataflowBlockOptions? options) =>
+        DataflowBuilderHelpers.ApplyCancellationToken(options, _defaultCancellationToken);
 
-        linkToMethod!.Invoke(source, [target, _defaultLinkOptions]);
-    }
-
-    private void AddBlock(string? name, IDataflowBlock block, Type inputType, Type? outputType)
-    {
-        var index = _blocks.Count;
-        var actualName = name ?? GenerateBlockName(block, index);
-
-        if (!_blockNames.Add(actualName))
-        {
-            throw new ArgumentException($"A block with the name '{actualName}' already exists in the pipeline.", nameof(name));
-        }
-
-        _blocks.Add(new BlockDescriptor
-        {
-            Name = actualName,
-            Block = block,
-            InputType = inputType,
-            OutputType = outputType,
-            Index = index
-        });
-    }
-
-    private static string GenerateBlockName(IDataflowBlock block, int index)
-    {
-        var blockTypeName = block.GetType().Name;
-        var genericArgsIndex = blockTypeName.IndexOf('`');
-        if (genericArgsIndex > 0)
-        {
-            blockTypeName = blockTypeName[..genericArgsIndex];
-        }
-
-        return $"{blockTypeName}_{index}";
-    }
-
-    private DataflowBlockOptions? ApplyCancellationToken(DataflowBlockOptions? options)
-    {
-        if (_defaultCancellationToken == default)
-        {
-            return options;
-        }
-
-        options ??= new DataflowBlockOptions();
-        if (options.CancellationToken == default)
-        {
-            options.CancellationToken = _defaultCancellationToken;
-        }
-
-        return options;
-    }
-
-    private ExecutionDataflowBlockOptions? ApplyCancellationToken(ExecutionDataflowBlockOptions? options)
-    {
-        if (_defaultCancellationToken == default)
-        {
-            return options;
-        }
-
-        options ??= new ExecutionDataflowBlockOptions();
-        if (options.CancellationToken == default)
-        {
-            options.CancellationToken = _defaultCancellationToken;
-        }
-
-        return options;
-    }
-
-    private GroupingDataflowBlockOptions? ApplyCancellationToken(GroupingDataflowBlockOptions? options)
-    {
-        if (_defaultCancellationToken == default)
-        {
-            return options;
-        }
-
-        options ??= new GroupingDataflowBlockOptions();
-        if (options.CancellationToken == default)
-        {
-            options.CancellationToken = _defaultCancellationToken;
-        }
-
-        return options;
-    }
+    private GroupingDataflowBlockOptions? ApplyCancellationToken(GroupingDataflowBlockOptions? options) =>
+        DataflowBuilderHelpers.ApplyCancellationToken(options, _defaultCancellationToken);
 }

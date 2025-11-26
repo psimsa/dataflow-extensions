@@ -11,7 +11,7 @@ namespace Tpl.Dataflow.Builder;
 ///     .AddBufferBlock&lt;string&gt;()
 ///     .AddTransformBlock&lt;string, int&gt;(int.Parse, name: "Parser")
 ///     .AddActionBlock&lt;int&gt;(Console.WriteLine)
-///     .BuildTerminal();
+///     .Build();
 /// </code>
 /// </example>
 public sealed class DataflowPipelineBuilder
@@ -43,9 +43,10 @@ public sealed class DataflowPipelineBuilder
         string? name = null,
         DataflowBlockOptions? options = null)
     {
-        options = ApplyCancellationToken(options);
+        options = DataflowBuilderHelpers.ApplyCancellationToken(options, _defaultCancellationToken);
         var block = new BufferBlock<T>(options ?? new DataflowBlockOptions());
-        var descriptor = CreateDescriptor(name, block, typeof(T), typeof(T), 0);
+        var descriptor = DataflowBuilderHelpers.CreateDescriptor(name, block, typeof(T), typeof(T), 0,
+            (target, linkOptions) => block.LinkTo((ITargetBlock<T>)target, linkOptions));
 
         return new DataflowPipelineBuilder<T, T>(_defaultLinkOptions, _defaultCancellationToken, [descriptor]);
     }
@@ -66,9 +67,10 @@ public sealed class DataflowPipelineBuilder
     {
         ArgumentNullException.ThrowIfNull(transform);
 
-        options = ApplyCancellationToken(options);
+        options = DataflowBuilderHelpers.ApplyCancellationToken(options, _defaultCancellationToken);
         var block = new TransformBlock<TInput, TOutput>(transform, options ?? new ExecutionDataflowBlockOptions());
-        var descriptor = CreateDescriptor(name, block, typeof(TInput), typeof(TOutput), 0);
+        var descriptor = DataflowBuilderHelpers.CreateDescriptor(name, block, typeof(TInput), typeof(TOutput), 0,
+            (target, linkOptions) => block.LinkTo((ITargetBlock<TOutput>)target, linkOptions));
 
         return new DataflowPipelineBuilder<TInput, TOutput>(_defaultLinkOptions, _defaultCancellationToken, [descriptor]);
     }
@@ -89,61 +91,11 @@ public sealed class DataflowPipelineBuilder
     {
         ArgumentNullException.ThrowIfNull(transform);
 
-        options = ApplyCancellationToken(options);
+        options = DataflowBuilderHelpers.ApplyCancellationToken(options, _defaultCancellationToken);
         var block = new TransformBlock<TInput, TOutput>(transform, options ?? new ExecutionDataflowBlockOptions());
-        var descriptor = CreateDescriptor(name, block, typeof(TInput), typeof(TOutput), 0);
+        var descriptor = DataflowBuilderHelpers.CreateDescriptor(name, block, typeof(TInput), typeof(TOutput), 0,
+            (target, linkOptions) => block.LinkTo((ITargetBlock<TOutput>)target, linkOptions));
 
         return new DataflowPipelineBuilder<TInput, TOutput>(_defaultLinkOptions, _defaultCancellationToken, [descriptor]);
-    }
-
-    private static BlockDescriptor CreateDescriptor(string? name, IDataflowBlock block, Type inputType, Type? outputType, int index)
-    {
-        var blockTypeName = block.GetType().Name;
-        var genericArgsIndex = blockTypeName.IndexOf('`');
-        if (genericArgsIndex > 0)
-        {
-            blockTypeName = blockTypeName[..genericArgsIndex];
-        }
-
-        return new BlockDescriptor
-        {
-            Name = name ?? $"{blockTypeName}_{index}",
-            Block = block,
-            InputType = inputType,
-            OutputType = outputType,
-            Index = index
-        };
-    }
-
-    private DataflowBlockOptions? ApplyCancellationToken(DataflowBlockOptions? options)
-    {
-        if (_defaultCancellationToken == default)
-        {
-            return options;
-        }
-
-        options ??= new DataflowBlockOptions();
-        if (options.CancellationToken == default)
-        {
-            options.CancellationToken = _defaultCancellationToken;
-        }
-
-        return options;
-    }
-
-    private ExecutionDataflowBlockOptions? ApplyCancellationToken(ExecutionDataflowBlockOptions? options)
-    {
-        if (_defaultCancellationToken == default)
-        {
-            return options;
-        }
-
-        options ??= new ExecutionDataflowBlockOptions();
-        if (options.CancellationToken == default)
-        {
-            options.CancellationToken = _defaultCancellationToken;
-        }
-
-        return options;
     }
 }

@@ -36,4 +36,11 @@ internal sealed class BlockDescriptor
     /// Gets whether this block is a terminal block (no output).
     /// </summary>
     public bool IsTerminal => OutputType is null;
+
+    /// <summary>
+    /// Gets a delegate that links this block to a target block.
+    /// Captured at compile-time to avoid reflection for AOT compatibility.
+    /// Null for terminal blocks (ActionBlock).
+    /// </summary>
+    public Action<IDataflowBlock, DataflowLinkOptions>? LinkToNext { get; init; }
 }
