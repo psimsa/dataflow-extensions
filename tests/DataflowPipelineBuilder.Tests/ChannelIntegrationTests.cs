@@ -348,6 +348,7 @@ public class ChannelIntegrationTests
 
         Assert.Contains(1, results);
         Assert.Contains(2, results);
+        Assert.DoesNotContain(3, results);
     }
 
     [Fact]

@@ -238,6 +238,9 @@ internal static class DataflowBuilderHelpers
     /// <remarks>
     /// The task completes the target block when the channel reader completes.
     /// If an exception occurs, the target block is faulted.
+    /// This fire-and-forget pattern is safe because exceptions are handled within PumpChannelToBlockAsync,
+    /// which faults the target block if an error occurs. The target block's completion task provides
+    /// observability of any errors through the pipeline's overall completion.
     /// </remarks>
     public static void StartChannelPumpingTask<T>(
         ChannelReader<T> reader,
