@@ -1,6 +1,7 @@
 using System.Threading.Tasks.Dataflow;
+using Tpl.Dataflow.Builder;
 
-namespace DataflowPipelineBuilder.Tests;
+namespace Tpl.Dataflow.Builder.Tests;
 
 public class DataflowPipelineExecutionTests
 {
@@ -117,7 +118,7 @@ public class DataflowPipelineExecutionTests
         await using var pipeline = new DataflowPipelineBuilder()
             .AddBufferBlock<int>()
             .AddActionBlock(x => results.Add(x * 10))
-            .BuildTerminal();
+            .Build();
 
         pipeline.Post(1);
         pipeline.Post(2);
@@ -150,7 +151,7 @@ public class DataflowPipelineExecutionTests
                     semaphore.Release();
                 }
             })
-            .BuildTerminal();
+            .Build();
 
         pipeline.Post(1);
         pipeline.Post(2);

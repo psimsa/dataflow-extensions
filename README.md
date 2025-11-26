@@ -1,7 +1,7 @@
 # DataflowPipelineBuilder
 
 [![CI](https://github.com/psimsa/dataflow-extensions/actions/workflows/ci.yml/badge.svg)](https://github.com/psimsa/dataflow-extensions/actions/workflows/ci.yml)
-[![.NET](https://img.shields.io/badge/.NET-8.0%20%7C%209.0-blue)](https://dotnet.microsoft.com/)
+[![.NET](https://img.shields.io/badge/.NET-8.0%20%7C%2010.0-blue)](https://dotnet.microsoft.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 A fluent builder pattern library for creating `System.Threading.Tasks.Dataflow` pipelines with type-safe chaining, automatic block linking, and built-in completion propagation.
@@ -15,6 +15,7 @@ A fluent builder pattern library for creating `System.Threading.Tasks.Dataflow` 
 - **IObservable Support** - Integrate with Reactive Extensions
 - **Named Blocks** - Optional naming for debugging and diagnostics
 - **Cancellation Support** - Built-in cancellation token propagation
+- **AOT Compatible** - No reflection - fully compatible with Native AOT compilation
 
 ## Installation
 
@@ -29,10 +30,10 @@ dotnet add package DataflowPipelineBuilder.Abstractions
 ## Quick Start
 
 ```csharp
-using PipelineBuilder = DataflowPipelineBuilder.DataflowPipelineBuilder;
+using Tpl.Dataflow.Builder;
 
 // Create a simple transform pipeline
-await using var pipeline = new PipelineBuilder()
+await using var pipeline = new DataflowPipelineBuilder()
     .AddBufferBlock<int>()
     .AddTransformBlock<string>(x => $"Number: {x}")
     .Build();
@@ -56,7 +57,7 @@ await foreach (var result in pipeline.ToAsyncEnumerable())
 ### Async Transform with Parallelism
 
 ```csharp
-await using var pipeline = new PipelineBuilder()
+await using var pipeline = new DataflowPipelineBuilder()
     .AddBufferBlock<string>()
     .AddTransformBlock<string>(
         async url => 
@@ -71,7 +72,7 @@ await using var pipeline = new PipelineBuilder()
 ### Batch Processing
 
 ```csharp
-await using var pipeline = new PipelineBuilder()
+await using var pipeline = new DataflowPipelineBuilder()
     .AddBufferBlock<int>()
     .AddBatchBlock(batchSize: 3)
     .AddTransformBlock<string>(batch => 
@@ -82,11 +83,13 @@ await using var pipeline = new PipelineBuilder()
 ### Terminal Pipeline (ActionBlock)
 
 ```csharp
-await using var pipeline = new PipelineBuilder()
+// AddActionBlock returns DataflowPipelineBuilder<TInput>
+// which only has Build() - returns IDataflowPipeline<TInput> (base interface)
+await using var pipeline = new DataflowPipelineBuilder()
     .AddBufferBlock<int>()
     .AddTransformBlock<string>(x => $"Item #{x}")
     .AddActionBlock(item => Console.WriteLine($"Processing: {item}"))
-    .BuildTerminal();  // Note: BuildTerminal() for ActionBlock
+    .Build();
 
 await pipeline.Completion;
 ```
@@ -94,7 +97,7 @@ await pipeline.Completion;
 ### TransformMany (1:N Expansion)
 
 ```csharp
-await using var pipeline = new PipelineBuilder()
+await using var pipeline = new DataflowPipelineBuilder()
     .AddBufferBlock<string>()
     .AddTransformManyBlock<char>(s => s.ToCharArray())
     .Build();
@@ -103,7 +106,7 @@ await using var pipeline = new PipelineBuilder()
 ### Named Blocks for Debugging
 
 ```csharp
-await using var pipeline = new PipelineBuilder()
+await using var pipeline = new DataflowPipelineBuilder()
     .AddBufferBlock<int>("InputBuffer")
     .AddTransformBlock<int>(x => x * 2, "Doubler")
     .AddTransformBlock<string>(x => x.ToString(), "Stringifier")
@@ -118,7 +121,6 @@ await using var pipeline = new PipelineBuilder()
 | TransformBlock | `AddTransformBlock<TOut>(Func)` | Transforms each input to one output |
 | TransformManyBlock | `AddTransformManyBlock<TOut>(Func)` | Transforms each input to multiple outputs |
 | BatchBlock | `AddBatchBlock(batchSize)` | Groups inputs into arrays |
-| BroadcastBlock | `AddBroadcastBlock(cloningFunc?)` | Broadcasts to all linked targets |
 | ActionBlock | `AddActionBlock(Action)` | Terminal block that consumes inputs |
 | Custom | `AddCustomBlock(IPropagatorBlock)` | Add any custom propagator block |
 
@@ -150,7 +152,7 @@ if (pipeline.TryReceive(out var item))
 ## Target Frameworks
 
 - .NET 8.0
-- .NET 9.0
+- .NET 10.0
 
 ## License
 

@@ -1,22 +1,24 @@
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks.Dataflow;
-using DataflowPipelineBuilder.Abstractions;
+using Tpl.Dataflow.Builder.Abstractions;
 
-namespace DataflowPipelineBuilder;
+namespace Tpl.Dataflow.Builder;
 
 /// <summary>
-/// Implementation of a terminal dataflow pipeline (ends with ActionBlock).
+/// Implementation of a dataflow pipeline that can produce output.
 /// </summary>
 /// <typeparam name="TInput">The input type of the pipeline.</typeparam>
-internal sealed class TerminalDataflowPipeline<TInput> : ITerminalDataflowPipeline<TInput>
+/// <typeparam name="TOutput">The output type of the pipeline.</typeparam>
+internal sealed class DataflowPipeline<TInput, TOutput> : IDataflowPipeline<TInput, TOutput>
 {
     private readonly ITargetBlock<TInput> _head;
-    private readonly IDataflowBlock _tail;
+    private readonly IReceivableSourceBlock<TOutput> _tail;
     private readonly IReadOnlyDictionary<string, IDataflowBlock> _blocks;
     private bool _disposed;
 
-    public TerminalDataflowPipeline(
+    public DataflowPipeline(
         ITargetBlock<TInput> head,
-        IDataflowBlock tail,
+        IReceivableSourceBlock<TOutput> tail,
         IReadOnlyDictionary<string, IDataflowBlock> blocks)
     {
         _head = head ?? throw new ArgumentNullException(nameof(head));
@@ -48,6 +50,40 @@ internal sealed class TerminalDataflowPipeline<TInput> : ITerminalDataflowPipeli
     public void Complete()
     {
         _head.Complete();
+    }
+
+    /// <inheritdoc/>
+    public IObservable<TOutput> AsObservable()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        return _tail.AsObservable();
+    }
+
+    /// <inheritdoc/>
+    public async IAsyncEnumerable<TOutput> ToAsyncEnumerable(
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        while (await _tail.OutputAvailableAsync(cancellationToken).ConfigureAwait(false))
+        {
+            while (_tail.TryReceive(out var item))
+            {
+                yield return item;
+            }
+        }
+    }
+
+    /// <inheritdoc/>
+    public Task<TOutput> ReceiveAsync(CancellationToken cancellationToken = default)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        return _tail.ReceiveAsync(cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public bool TryReceive(out TOutput? item)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        return _tail.TryReceive(out item);
     }
 
     /// <inheritdoc/>
