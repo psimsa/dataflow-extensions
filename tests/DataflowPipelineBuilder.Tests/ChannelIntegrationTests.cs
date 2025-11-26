@@ -317,7 +317,7 @@ public class ChannelIntegrationTests
     public async Task FromChannelSource_WithCancellation_StopsPumping()
     {
         var channel = Channel.CreateUnbounded<int>();
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         var results = new List<int>();
 
         var pipeline = new DataflowPipelineBuilder(defaultCancellationToken: cts.Token)
