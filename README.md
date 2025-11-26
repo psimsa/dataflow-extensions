@@ -15,6 +15,7 @@ A fluent builder pattern library for creating `System.Threading.Tasks.Dataflow` 
 - **IObservable Support** - Integrate with Reactive Extensions
 - **Named Blocks** - Optional naming for debugging and diagnostics
 - **Cancellation Support** - Built-in cancellation token propagation
+- **AOT Compatible** - No reflection - fully compatible with Native AOT compilation
 
 ## Installation
 
