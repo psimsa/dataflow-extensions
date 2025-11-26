@@ -1,0 +1,95 @@
+name: Publish to NuGet
+
+on:
+  push:
+    tags:
+      - "v*"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_NOLOGO: true
+
+jobs:
+  publish:
+    name: Publish NuGet Packages
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build Release
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Run tests
+        run: dotnet test --no-build --configuration Release --verbosity normal
+
+      - name: Fetch NuGet API Key from Akeyless
+        uses: akeyless-community/akeyless-github-action@v1.1.3
+        id: fetch-secrets
+        with:
+          access-id: ${{ secrets.AKEYLESS_ACCESS_ID }}
+          access-key: ${{ secrets.AKEYLESS_ACCESS_KEY }}
+          access-type: access_key
+          static-secrets: |
+            - name: "/keys/nuget"
+              output-name: "NUGET_API_KEY"
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Publishing version: $VERSION"
+
+      - name: Pack NuGet packages
+        run: |
+          dotnet pack src/DataflowPipelineBuilder.Abstractions/DataflowPipelineBuilder.Abstractions.csproj \
+            --configuration Release \
+            --no-restore \
+            --output ./artifacts \
+            -p:Version=${{ steps.version.outputs.version }}
+          dotnet pack src/DataflowPipelineBuilder/DataflowPipelineBuilder.csproj \
+            --configuration Release \
+            --no-restore \
+            --output ./artifacts \
+            -p:Version=${{ steps.version.outputs.version }}
+
+      - name: Publish packages to NuGet.org
+        run: |
+          dotnet nuget push ./artifacts/*.nupkg \
+            --api-key ${{ steps.fetch-secrets.outputs.NUGET_API_KEY }} \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-packages-${{ steps.version.outputs.version }}
+          path: ./artifacts/*.nupkg
+          retention-days: 30
