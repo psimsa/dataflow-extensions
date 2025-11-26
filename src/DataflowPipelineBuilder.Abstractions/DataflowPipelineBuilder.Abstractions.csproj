@@ -8,10 +8,10 @@
     <IsAotCompatible>true</IsAotCompatible>
 
     <!-- Package Information -->
-    <PackageId>DataflowPipelineBuilder.Abstractions</PackageId>
+    <PackageId>Tpl.Dataflow.Builder.Abstractions</PackageId>
     <Version>1.0.0</Version>
     <Authors>psimsa</Authors>
-    <Description>Abstractions and interfaces for DataflowPipelineBuilder - a fluent builder for TPL Dataflow pipelines.</Description>
+    <Description>Abstractions and interfaces for Tpl.Dataflow.Builder - a fluent builder for TPL Dataflow pipelines.</Description>
     <PackageTags>dataflow;tpl;pipeline;builder;abstractions</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/psimsa/dataflow-extensions</PackageProjectUrl>
