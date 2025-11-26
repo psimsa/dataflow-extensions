@@ -1,8 +1,7 @@
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks.Dataflow;
-using DataflowPipelineBuilder.Abstractions;
+using Tpl.Dataflow.Builder.Abstractions;
 
-namespace DataflowPipelineBuilder;
+namespace Tpl.Dataflow.Builder;
 
 /// <summary>
 /// Builder for chaining dataflow blocks with type safety.
@@ -15,7 +14,6 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
     private readonly CancellationToken _defaultCancellationToken;
     private readonly List<BlockDescriptor> _blocks;
     private readonly HashSet<string> _blockNames;
-    private bool _hasTerminalBlock;
 
     internal DataflowPipelineBuilder(
         DataflowLinkOptions defaultLinkOptions,
@@ -26,7 +24,6 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
         _defaultCancellationToken = defaultCancellationToken;
         _blocks = blocks;
         _blockNames = new HashSet<string>(blocks.Select(b => b.Name));
-        _hasTerminalBlock = blocks.Count > 0 && blocks[^1].IsTerminal;
     }
 
     /// <summary>
@@ -39,7 +36,6 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
         string? name = null,
         DataflowBlockOptions? options = null)
     {
-        ThrowIfTerminated();
         options = ApplyCancellationToken(options);
         var block = new BufferBlock<TOutput>(options ?? new DataflowBlockOptions());
         AddBlock(name, block, typeof(TOutput), typeof(TOutput));
@@ -60,7 +56,6 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
         string? name = null,
         ExecutionDataflowBlockOptions? options = null)
     {
-        ThrowIfTerminated();
         ArgumentNullException.ThrowIfNull(transform);
 
         options = ApplyCancellationToken(options);
@@ -83,7 +78,6 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
         string? name = null,
         ExecutionDataflowBlockOptions? options = null)
     {
-        ThrowIfTerminated();
         ArgumentNullException.ThrowIfNull(transform);
 
         options = ApplyCancellationToken(options);
@@ -106,7 +100,6 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
         string? name = null,
         ExecutionDataflowBlockOptions? options = null)
     {
-        ThrowIfTerminated();
         ArgumentNullException.ThrowIfNull(transform);
 
         options = ApplyCancellationToken(options);
@@ -129,7 +122,6 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
         string? name = null,
         ExecutionDataflowBlockOptions? options = null)
     {
-        ThrowIfTerminated();
         ArgumentNullException.ThrowIfNull(transform);
 
         options = ApplyCancellationToken(options);
@@ -151,7 +143,6 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
         string? name = null,
         GroupingDataflowBlockOptions? options = null)
     {
-        ThrowIfTerminated();
         if (batchSize <= 0)
         {
             throw new ArgumentOutOfRangeException(nameof(batchSize), "Batch size must be greater than zero.");
@@ -165,26 +156,6 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
     }
 
     /// <summary>
-    /// Continues the pipeline with a BroadcastBlock.
-    /// </summary>
-    /// <param name="cloningFunction">Optional function to clone items. If null, items are passed by reference.</param>
-    /// <param name="name">Optional name for the block. If null, auto-generated.</param>
-    /// <param name="options">Optional block options.</param>
-    /// <returns>A builder to continue building the pipeline.</returns>
-    public DataflowPipelineBuilder<TInput, TOutput> AddBroadcastBlock(
-        Func<TOutput, TOutput>? cloningFunction = null,
-        string? name = null,
-        DataflowBlockOptions? options = null)
-    {
-        ThrowIfTerminated();
-        options = ApplyCancellationToken(options);
-        var block = new BroadcastBlock<TOutput>(cloningFunction, options ?? new DataflowBlockOptions());
-        AddBlock(name, block, typeof(TOutput), typeof(TOutput));
-
-        return this;
-    }
-
-    /// <summary>
     /// Adds a custom propagator block to the pipeline.
     /// </summary>
     /// <typeparam name="TNewOutput">The output type of the custom block.</typeparam>
@@ -195,7 +166,6 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
         IPropagatorBlock<TOutput, TNewOutput> block,
         string? name = null)
     {
-        ThrowIfTerminated();
         ArgumentNullException.ThrowIfNull(block);
 
         AddBlock(name, block, typeof(TOutput), typeof(TNewOutput));
@@ -214,7 +184,6 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
         Func<IPropagatorBlock<TOutput, TNewOutput>> factory,
         string? name = null)
     {
-        ThrowIfTerminated();
         ArgumentNullException.ThrowIfNull(factory);
 
         var block = factory();
@@ -229,21 +198,19 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
     /// <param name="action">The action to execute for each item.</param>
     /// <param name="name">Optional name for the block. If null, auto-generated.</param>
     /// <param name="options">Optional execution options.</param>
-    /// <returns>The same builder for calling BuildTerminal().</returns>
-    public DataflowPipelineBuilder<TInput, TOutput> AddActionBlock(
+    /// <returns>A terminal builder that can only call Build().</returns>
+    public DataflowPipelineBuilder<TInput> AddActionBlock(
         Action<TOutput> action,
         string? name = null,
         ExecutionDataflowBlockOptions? options = null)
     {
-        ThrowIfTerminated();
         ArgumentNullException.ThrowIfNull(action);
 
         options = ApplyCancellationToken(options);
         var block = new ActionBlock<TOutput>(action, options ?? new ExecutionDataflowBlockOptions());
         AddBlock(name, block, typeof(TOutput), outputType: null);
-        _hasTerminalBlock = true;
 
-        return this;
+        return new DataflowPipelineBuilder<TInput>(_defaultLinkOptions, _defaultCancellationToken, _blocks);
     }
 
     /// <summary>
@@ -252,39 +219,31 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
     /// <param name="action">The async action to execute for each item.</param>
     /// <param name="name">Optional name for the block. If null, auto-generated.</param>
     /// <param name="options">Optional execution options.</param>
-    /// <returns>The same builder for calling BuildTerminal().</returns>
-    public DataflowPipelineBuilder<TInput, TOutput> AddActionBlock(
+    /// <returns>A terminal builder that can only call Build().</returns>
+    public DataflowPipelineBuilder<TInput> AddActionBlock(
         Func<TOutput, Task> action,
         string? name = null,
         ExecutionDataflowBlockOptions? options = null)
     {
-        ThrowIfTerminated();
         ArgumentNullException.ThrowIfNull(action);
 
         options = ApplyCancellationToken(options);
         var block = new ActionBlock<TOutput>(action, options ?? new ExecutionDataflowBlockOptions());
         AddBlock(name, block, typeof(TOutput), outputType: null);
-        _hasTerminalBlock = true;
 
-        return this;
+        return new DataflowPipelineBuilder<TInput>(_defaultLinkOptions, _defaultCancellationToken, _blocks);
     }
 
     /// <summary>
-    /// Builds the pipeline with output capability (must NOT end with ActionBlock).
+    /// Builds the pipeline with output capability.
     /// </summary>
     /// <returns>A pipeline that can produce output via AsObservable(), ToAsyncEnumerable(), or ReceiveAsync().</returns>
-    /// <exception cref="InvalidOperationException">Thrown when the pipeline is empty or ends with ActionBlock.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when the pipeline is empty.</exception>
     public IDataflowPipeline<TInput, TOutput> Build()
     {
         if (_blocks.Count == 0)
         {
             throw new InvalidOperationException("Cannot build an empty pipeline. Add at least one block.");
-        }
-
-        if (_hasTerminalBlock)
-        {
-            throw new InvalidOperationException(
-                "Cannot build a pipeline with output when it ends with ActionBlock. Use BuildTerminal() instead.");
         }
 
         LinkBlocks();
@@ -294,33 +253,6 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
         var blocksDictionary = _blocks.ToDictionary(b => b.Name, b => b.Block);
 
         return new DataflowPipeline<TInput, TOutput>(head, tail, blocksDictionary);
-    }
-
-    /// <summary>
-    /// Builds the pipeline as a terminal pipeline (must end with ActionBlock).
-    /// </summary>
-    /// <returns>A pipeline that processes items but produces no output.</returns>
-    /// <exception cref="InvalidOperationException">Thrown when the pipeline is empty or doesn't end with ActionBlock.</exception>
-    public ITerminalDataflowPipeline<TInput> BuildTerminal()
-    {
-        if (_blocks.Count == 0)
-        {
-            throw new InvalidOperationException("Cannot build an empty pipeline. Add at least one block.");
-        }
-
-        if (!_hasTerminalBlock)
-        {
-            throw new InvalidOperationException(
-                "Cannot build a terminal pipeline when it doesn't end with ActionBlock. Use Build() instead, or add an ActionBlock.");
-        }
-
-        LinkBlocks();
-
-        var head = (ITargetBlock<TInput>)_blocks[0].Block;
-        var tail = _blocks[^1].Block;
-        var blocksDictionary = _blocks.ToDictionary(b => b.Name, b => b.Block);
-
-        return new TerminalDataflowPipeline<TInput>(head, tail, blocksDictionary);
     }
 
     private void LinkBlocks()
@@ -376,15 +308,6 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
         }
 
         return $"{blockTypeName}_{index}";
-    }
-
-    private void ThrowIfTerminated([CallerMemberName] string? caller = null)
-    {
-        if (_hasTerminalBlock)
-        {
-            throw new InvalidOperationException(
-                $"Cannot call {caller} after adding a terminal ActionBlock. The pipeline has been terminated.");
-        }
     }
 
     private DataflowBlockOptions? ApplyCancellationToken(DataflowBlockOptions? options)

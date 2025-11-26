@@ -1,9 +1,10 @@
 using System.Threading.Tasks.Dataflow;
 
-namespace DataflowPipelineBuilder.Abstractions;
+namespace Tpl.Dataflow.Builder.Abstractions;
 
 /// <summary>
-/// Represents a built dataflow pipeline with typed input and output.
+/// Represents a consumable dataflow pipeline with typed input and output.
+/// Extends the base <see cref="IDataflowPipeline{TInput}"/> with output consumption methods.
 /// </summary>
 /// <typeparam name="TInput">The type of data accepted by the pipeline head.</typeparam>
 /// <typeparam name="TOutput">The type of data produced by the pipeline tail.</typeparam>
@@ -22,38 +23,8 @@ namespace DataflowPipelineBuilder.Abstractions;
 /// }
 /// </code>
 /// </example>
-public interface IDataflowPipeline<in TInput, TOutput> : IAsyncDisposable
+public interface IDataflowPipeline<in TInput, TOutput> : IDataflowPipeline<TInput>
 {
-    /// <summary>
-    /// Posts an item to the pipeline head synchronously.
-    /// </summary>
-    /// <param name="item">The item to post.</param>
-    /// <returns>True if the item was accepted; otherwise, false.</returns>
-    bool Post(TInput item);
-
-    /// <summary>
-    /// Sends an item to the pipeline head asynchronously.
-    /// </summary>
-    /// <param name="item">The item to send.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>True if the item was accepted; otherwise, false.</returns>
-    Task<bool> SendAsync(TInput item, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Signals the pipeline to complete and stop accepting new items.
-    /// </summary>
-    void Complete();
-
-    /// <summary>
-    /// Gets a task representing the completion of the entire pipeline.
-    /// </summary>
-    Task Completion { get; }
-
-    /// <summary>
-    /// Gets the named blocks in the pipeline for diagnostics and monitoring.
-    /// </summary>
-    IReadOnlyDictionary<string, IDataflowBlock> Blocks { get; }
-
     /// <summary>
     /// Creates an observable sequence from the pipeline output.
     /// Users can add the System.Reactive package for full Rx operator support.

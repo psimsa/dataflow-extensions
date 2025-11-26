@@ -1,25 +1,27 @@
 using System.Threading.Tasks.Dataflow;
 
-namespace DataflowPipelineBuilder.Abstractions;
+namespace Tpl.Dataflow.Builder.Abstractions;
 
 /// <summary>
-/// Represents a built dataflow pipeline with typed input but no output (terminal ActionBlock).
+/// Represents the base interface for a built dataflow pipeline with typed input.
+/// This interface provides core pipeline functionality: posting items, completion, and diagnostics.
 /// </summary>
 /// <typeparam name="TInput">The type of data accepted by the pipeline head.</typeparam>
 /// <example>
 /// <code>
+/// // Terminal pipeline (ends with ActionBlock)
 /// var pipeline = new DataflowPipelineBuilder()
 ///     .AddBufferBlock&lt;string&gt;()
-///     .AddTransformBlock&lt;string, int&gt;(int.Parse)
-///     .AddActionBlock&lt;int&gt;(Console.WriteLine)
-///     .BuildTerminal();
+///     .AddTransformBlock&lt;int&gt;(int.Parse)
+///     .AddActionBlock(Console.WriteLine)
+///     .Build();
 ///
 /// pipeline.Post("42");
 /// pipeline.Complete();
 /// await pipeline.Completion;
 /// </code>
 /// </example>
-public interface ITerminalDataflowPipeline<in TInput> : IAsyncDisposable
+public interface IDataflowPipeline<in TInput> : IAsyncDisposable
 {
     /// <summary>
     /// Posts an item to the pipeline head synchronously.

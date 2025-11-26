@@ -1,6 +1,6 @@
 using System.Threading.Tasks.Dataflow;
 
-namespace DataflowPipelineBuilder;
+namespace Tpl.Dataflow.Builder;
 
 /// <summary>
 /// Describes a block in the dataflow pipeline with its metadata.
