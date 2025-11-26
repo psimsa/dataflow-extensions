@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+
+    <!-- Package Information -->
+    <PackageId>DataflowPipelineBuilder.Abstractions</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>psimsa</Authors>
+    <Description>Abstractions and interfaces for DataflowPipelineBuilder - a fluent builder for TPL Dataflow pipelines.</Description>
+    <PackageTags>dataflow;tpl;pipeline;builder;abstractions</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/psimsa/dataflow-extensions</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/psimsa/dataflow-extensions</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+
+    <!-- Build Settings -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Threading.Tasks.Dataflow" Version="9.0.0" />
+  </ItemGroup>
+
+</Project>
