@@ -1,0 +1,55 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.12.0.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{A5A3D5C5-1234-4567-89AB-CDEF01234567}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{B6B4E6D6-2345-5678-9ABC-DEF012345678}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{C3C1D3C3-0123-3456-789A-BCDEF0123456}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataflowPipelineBuilder.Abstractions", "src\DataflowPipelineBuilder.Abstractions\DataflowPipelineBuilder.Abstractions.csproj", "{C7C5F7E7-3456-6789-ABCD-EF0123456789}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataflowPipelineBuilder", "src\DataflowPipelineBuilder\DataflowPipelineBuilder.csproj", "{D8D6G8F8-4567-789A-BCDE-F01234567890}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataflowPipelineBuilder.Tests", "tests\DataflowPipelineBuilder.Tests\DataflowPipelineBuilder.Tests.csproj", "{E9E7H9G9-5678-89AB-CDEF-012345678901}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataflowPipelineBuilder.Sample", "samples\DataflowPipelineBuilder.Sample\DataflowPipelineBuilder.Sample.csproj", "{F0F8I0H0-6789-9ABC-DEF0-123456789012}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C7C5F7E7-3456-6789-ABCD-EF0123456789}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C7C5F7E7-3456-6789-ABCD-EF0123456789}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C7C5F7E7-3456-6789-ABCD-EF0123456789}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C7C5F7E7-3456-6789-ABCD-EF0123456789}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D8D6G8F8-4567-789A-BCDE-F01234567890}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D8D6G8F8-4567-789A-BCDE-F01234567890}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D8D6G8F8-4567-789A-BCDE-F01234567890}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D8D6G8F8-4567-789A-BCDE-F01234567890}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E9E7H9G9-5678-89AB-CDEF-012345678901}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E9E7H9G9-5678-89AB-CDEF-012345678901}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E9E7H9G9-5678-89AB-CDEF-012345678901}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E9E7H9G9-5678-89AB-CDEF-012345678901}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F0F8I0H0-6789-9ABC-DEF0-123456789012}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F0F8I0H0-6789-9ABC-DEF0-123456789012}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F0F8I0H0-6789-9ABC-DEF0-123456789012}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F0F8I0H0-6789-9ABC-DEF0-123456789012}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{C7C5F7E7-3456-6789-ABCD-EF0123456789} = {A5A3D5C5-1234-4567-89AB-CDEF01234567}
+		{D8D6G8F8-4567-789A-BCDE-F01234567890} = {A5A3D5C5-1234-4567-89AB-CDEF01234567}
+		{E9E7H9G9-5678-89AB-CDEF-012345678901} = {B6B4E6D6-2345-5678-9ABC-DEF012345678}
+		{F0F8I0H0-6789-9ABC-DEF0-123456789012} = {C3C1D3C3-0123-3456-789A-BCDEF0123456}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {12345678-1234-1234-1234-123456789ABC}
+	EndGlobalSection
+EndGlobal
