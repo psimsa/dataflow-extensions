@@ -11,6 +11,7 @@ A fluent builder pattern library for creating `System.Threading.Tasks.Dataflow` 
 - **Fluent API** - Chain dataflow blocks naturally with IntelliSense-friendly syntax
 - **Type Safety** - Full compile-time type checking between pipeline stages
 - **Auto-linking** - Blocks are automatically linked with completion propagation
+- **Channel Integration** - Use System.Threading.Channels as input source or output sink
 - **IAsyncEnumerable Support** - Consume pipeline output as async streams
 - **IObservable Support** - Integrate with Reactive Extensions
 - **Named Blocks** - Optional naming for debugging and diagnostics
@@ -113,6 +114,66 @@ await using var pipeline = new DataflowPipelineBuilder()
     .Build();
 ```
 
+### Channel Integration
+
+#### Channel as Input Source
+
+```csharp
+var inputChannel = Channel.CreateUnbounded<string>();
+
+await using var pipeline = new DataflowPipelineBuilder()
+    .FromChannelSource(inputChannel)
+    .AddTransformBlock(int.Parse)
+    .AddActionBlock(Console.WriteLine)
+    .Build();
+
+// Write to channel from producer
+await inputChannel.Writer.WriteAsync("42");
+inputChannel.Writer.Complete();
+
+await pipeline.Completion;
+```
+
+#### Channel as Output Sink
+
+```csharp
+var pipeline = new DataflowPipelineBuilder()
+    .AddBufferBlock<int>()
+    .AddTransformBlock(x => x * 2)
+    .BuildAsChannel();  // Returns IDataflowChannelPipeline
+
+pipeline.Post(21);
+pipeline.Complete();
+
+// Read from output channel
+await foreach (var item in pipeline.Output.ReadAllAsync())
+{
+    Console.WriteLine(item); // 42
+}
+```
+
+#### Full Channel-to-Channel Pipeline
+
+```csharp
+var inputChannel = Channel.CreateUnbounded<int>();
+
+var pipeline = new DataflowPipelineBuilder()
+    .FromChannelSource(inputChannel)
+    .AddTransformBlock(x => x * 2)
+    .AddTransformBlock(x => $"Result: {x}")
+    .BuildAsChannel(new BoundedChannelOptions(100)); // Bounded output
+
+// Producer
+await inputChannel.Writer.WriteAsync(21);
+inputChannel.Writer.Complete();
+
+// Consumer
+await foreach (var result in pipeline.Output.ReadAllAsync())
+{
+    Console.WriteLine(result); // "Result: 42"
+}
+```
+
 ## Supported Blocks
 
 | Block Type | Method | Description |
@@ -123,6 +184,15 @@ await using var pipeline = new DataflowPipelineBuilder()
 | BatchBlock | `AddBatchBlock(batchSize)` | Groups inputs into arrays |
 | ActionBlock | `AddActionBlock(Action)` | Terminal block that consumes inputs |
 | Custom | `AddCustomBlock(IPropagatorBlock)` | Add any custom propagator block |
+| Channel Source | `FromChannelSource(Channel/ChannelReader)` | Start pipeline from a channel |
+
+## Build Methods
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `Build()` | `IDataflowPipeline<TIn, TOut>` | Standard pipeline with output |
+| `Build()` (after ActionBlock) | `IDataflowPipeline<TIn>` | Terminal pipeline (no output) |
+| `BuildAsChannel()` | `IDataflowChannelPipeline<TIn, TOut>` | Pipeline with Channel output |
 
 ## Output Consumption Methods
 
