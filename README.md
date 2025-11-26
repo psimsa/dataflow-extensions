@@ -21,10 +21,10 @@ A fluent builder pattern library for creating `System.Threading.Tasks.Dataflow` 
 
 ```bash
 # Main library
-dotnet add package DataflowPipelineBuilder
+dotnet add package Tpl.Dataflow.Builder
 
 # Abstractions only (for consumers/interfaces)
-dotnet add package DataflowPipelineBuilder.Abstractions
+dotnet add package Tpl.Dataflow.Builder.Abstractions
 ```
 
 ## Quick Start

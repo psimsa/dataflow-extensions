@@ -8,7 +8,7 @@
     <IsAotCompatible>true</IsAotCompatible>
 
     <!-- Package Information -->
-    <PackageId>DataflowPipelineBuilder</PackageId>
+    <PackageId>Tpl.Dataflow.Builder</PackageId>
     <Version>1.0.0</Version>
     <Authors>psimsa</Authors>
     <Description>A fluent builder for TPL Dataflow pipelines. Simplifies creation and management of dataflow pipelines with type-safe chaining and automatic block linking.</Description>
