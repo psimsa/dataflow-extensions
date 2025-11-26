@@ -81,10 +81,28 @@ internal static class DataflowBuilderHelpers
         CancellationToken defaultCancellationToken,
         bool ensureOrdered)
     {
-        options ??= new ExecutionDataflowBlockOptions();
-
-        options.EnsureOrdered = ensureOrdered;
-
+        if (options is null)
+        {
+            options = new ExecutionDataflowBlockOptions
+            {
+                EnsureOrdered = ensureOrdered
+            };
+        }
+        else if (options.EnsureOrdered != ensureOrdered)
+        {
+            // Copy all relevant properties to a new instance
+            var newOptions = new ExecutionDataflowBlockOptions
+            {
+                MaxDegreeOfParallelism = options.MaxDegreeOfParallelism,
+                BoundedCapacity = options.BoundedCapacity,
+                CancellationToken = options.CancellationToken,
+                MaxMessagesPerTask = options.MaxMessagesPerTask,
+                NameFormat = options.NameFormat,
+                TaskScheduler = options.TaskScheduler,
+                EnsureOrdered = ensureOrdered
+            };
+            options = newOptions;
+        }
         if (defaultCancellationToken != default && options.CancellationToken == default)
         {
             options.CancellationToken = defaultCancellationToken;
