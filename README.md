@@ -82,8 +82,8 @@ await using var pipeline = new DataflowPipelineBuilder()
 ### Terminal Pipeline (ActionBlock)
 
 ```csharp
-// AddActionBlock returns TerminalDataflowPipelineBuilder
-// which only has Build() - no need for BuildTerminal()!
+// AddActionBlock returns DataflowPipelineBuilder<TInput>
+// which only has Build() - returns IDataflowPipeline<TInput> (base interface)
 await using var pipeline = new DataflowPipelineBuilder()
     .AddBufferBlock<int>()
     .AddTransformBlock<string>(x => $"Item #{x}")
