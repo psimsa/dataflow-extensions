@@ -1,4 +1,4 @@
-using PipelineBuilder = DataflowPipelineBuilder.DataflowPipelineBuilder;
+using Tpl.Dataflow.Builder;
 
 Console.WriteLine("=== DataflowPipelineBuilder Sample ===\n");
 
@@ -6,7 +6,7 @@ Console.WriteLine("=== DataflowPipelineBuilder Sample ===\n");
 Console.WriteLine("Example 1: Simple Transform Pipeline");
 Console.WriteLine("-------------------------------------");
 
-await using var transformPipeline = new PipelineBuilder()
+await using var transformPipeline = new DataflowPipelineBuilder()
     .AddBufferBlock<int>()
     .AddTransformBlock<string>(x => $"Number: {x}")
     .Build();
@@ -29,7 +29,7 @@ Console.WriteLine();
 Console.WriteLine("Example 2: Async Transform with Parallelism");
 Console.WriteLine("--------------------------------------------");
 
-await using var asyncPipeline = new PipelineBuilder()
+await using var asyncPipeline = new DataflowPipelineBuilder()
     .AddBufferBlock<string>()
     .AddTransformBlock<string>(
         async url =>
@@ -62,7 +62,7 @@ Console.WriteLine();
 Console.WriteLine("Example 3: Batch Processing");
 Console.WriteLine("----------------------------");
 
-await using var batchPipeline = new PipelineBuilder()
+await using var batchPipeline = new DataflowPipelineBuilder()
     .AddBufferBlock<int>()
     .AddBatchBlock(batchSize: 3)
     .AddTransformBlock<string>(
@@ -89,7 +89,7 @@ Console.WriteLine("----------------------------------------------");
 
 var processedItems = new List<string>();
 
-await using var terminalPipeline = new PipelineBuilder()
+await using var terminalPipeline = new DataflowPipelineBuilder()
     .AddBufferBlock<int>()
     .AddTransformBlock<string>(x => $"Item #{x}")
     .AddActionBlock(item =>
@@ -97,7 +97,7 @@ await using var terminalPipeline = new PipelineBuilder()
         processedItems.Add(item);
         Console.WriteLine($"  Processing: {item}");
     })
-    .BuildTerminal();
+    .Build();
 
 for (int i = 1; i <= 5; i++)
 {
@@ -114,7 +114,7 @@ Console.WriteLine();
 Console.WriteLine("Example 5: TransformMany - Expanding Data");
 Console.WriteLine("------------------------------------------");
 
-await using var expandPipeline = new PipelineBuilder()
+await using var expandPipeline = new DataflowPipelineBuilder()
     .AddBufferBlock<string>()
     .AddTransformManyBlock<char>(s => s.ToCharArray())
     .Build();
@@ -133,7 +133,7 @@ Console.WriteLine("\n");
 Console.WriteLine("Example 6: Named Blocks (for debugging)");
 Console.WriteLine("----------------------------------------");
 
-await using var namedPipeline = new PipelineBuilder()
+await using var namedPipeline = new DataflowPipelineBuilder()
     .AddBufferBlock<int>("InputBuffer")
     .AddTransformBlock<int>(x => x * 2, "Doubler")
     .AddTransformBlock<string>(x => x.ToString(), "Stringifier")

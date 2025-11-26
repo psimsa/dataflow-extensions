@@ -1,7 +1,8 @@
 using System.Threading.Tasks.Dataflow;
-using DataflowPipelineBuilder.Abstractions;
+using Tpl.Dataflow.Builder;
+using Tpl.Dataflow.Builder.Abstractions;
 
-namespace DataflowPipelineBuilder.Tests;
+namespace Tpl.Dataflow.Builder.Tests;
 
 public class DataflowPipelineBuilderTests
 {
@@ -66,17 +67,6 @@ public class DataflowPipelineBuilderTests
     }
 
     [Fact]
-    public void AddBroadcastBlock_CreatesValidPipeline()
-    {
-        var pipeline = new DataflowPipelineBuilder()
-            .AddBroadcastBlock<string>()
-            .Build();
-
-        pipeline.Should().NotBeNull();
-        pipeline.Blocks.Should().HaveCount(1);
-    }
-
-    [Fact]
     public void AddActionBlock_CreatesTerminalPipeline()
     {
         var received = new List<int>();
@@ -84,46 +74,21 @@ public class DataflowPipelineBuilderTests
         var pipeline = new DataflowPipelineBuilder()
             .AddBufferBlock<int>()
             .AddActionBlock(x => received.Add(x))
-            .BuildTerminal();
+            .Build();
 
         pipeline.Should().NotBeNull();
-        pipeline.Should().BeAssignableTo<ITerminalDataflowPipeline<int>>();
+        pipeline.Should().BeAssignableTo<IDataflowPipeline<int>>();
+        pipeline.Should().NotBeAssignableTo<IDataflowPipeline<int, object>>();
     }
 
     [Fact]
-    public void Build_WithEmptyPipeline_ThrowsInvalidOperationException()
+    public void AddActionBlock_ReturnsTerminalBuilder_NotGenericBuilder()
     {
-        var builder = new DataflowPipelineBuilder();
-
-        var act = () => builder.AddBufferBlock<int>().AddActionBlock(_ => { }).Build();
-
-        act.Should().Throw<InvalidOperationException>()
-            .WithMessage("*ActionBlock*BuildTerminal*");
-    }
-
-    [Fact]
-    public void BuildTerminal_WithoutActionBlock_ThrowsInvalidOperationException()
-    {
-        var builder = new DataflowPipelineBuilder()
-            .AddBufferBlock<int>();
-
-        var act = () => builder.BuildTerminal();
-
-        act.Should().Throw<InvalidOperationException>()
-            .WithMessage("*ActionBlock*Build()*");
-    }
-
-    [Fact]
-    public void AddBlock_AfterActionBlock_ThrowsInvalidOperationException()
-    {
-        var builder = new DataflowPipelineBuilder()
+        var terminalBuilder = new DataflowPipelineBuilder()
             .AddBufferBlock<int>()
             .AddActionBlock(_ => { });
 
-        var act = () => builder.AddTransformBlock<string>(x => x.ToString());
-
-        act.Should().Throw<InvalidOperationException>()
-            .WithMessage("*ActionBlock*terminated*");
+        terminalBuilder.Should().BeOfType<DataflowPipelineBuilder<int>>();
     }
 
     [Fact]

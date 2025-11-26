@@ -1,6 +1,6 @@
 using System.Threading.Tasks.Dataflow;
 
-namespace DataflowPipelineBuilder;
+namespace Tpl.Dataflow.Builder;
 
 /// <summary>
 /// Describes a block in the dataflow pipeline with its metadata.
@@ -36,4 +36,11 @@ internal sealed class BlockDescriptor
     /// Gets whether this block is a terminal block (no output).
     /// </summary>
     public bool IsTerminal => OutputType is null;
+
+    /// <summary>
+    /// Gets a delegate that links this block to a target block.
+    /// Captured at compile-time to avoid reflection for AOT compatibility.
+    /// Null for terminal blocks (ActionBlock).
+    /// </summary>
+    public Action<IDataflowBlock, DataflowLinkOptions>? LinkToNext { get; init; }
 }
