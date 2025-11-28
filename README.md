@@ -11,6 +11,9 @@ A fluent builder pattern library for creating `System.Threading.Tasks.Dataflow` 
 - **Fluent API** - Chain dataflow blocks naturally with IntelliSense-friendly syntax
 - **Type Safety** - Full compile-time type checking between pipeline stages
 - **Auto-linking** - Blocks are automatically linked with completion propagation
+- **Custom Block Base Classes** - `PropagatorBlock<T,T>` and `AsyncPropagatorBlock<T,T>` for easy custom blocks
+- **Dependency Injection** - Optional `IServiceProvider` integration for DI-based block resolution
+- **Keyed Services** - Support for .NET 8+ keyed service resolution
 - **Channel Integration** - Use System.Threading.Channels as input source or output sink
 - **IAsyncEnumerable Support** - Consume pipeline output as async streams
 - **IObservable Support** - Integrate with Reactive Extensions
@@ -174,6 +177,110 @@ await foreach (var result in pipeline.Output.ReadAllAsync())
 }
 ```
 
+### Custom Propagator Blocks
+
+Create reusable custom blocks by inheriting from `PropagatorBlock<TIn, TOut>` (sync) or `AsyncPropagatorBlock<TIn, TOut>` (async):
+
+#### Synchronous Custom Block
+
+```csharp
+using Tpl.Dataflow.Builder.Abstractions;
+
+public class MultiplierBlock : PropagatorBlock<int, int>
+{
+    private readonly int _factor;
+    
+    public MultiplierBlock(int factor) => _factor = factor;
+    
+    protected override int Transform(int input) => input * _factor;
+}
+
+// Usage
+var pipeline = new DataflowPipelineBuilder()
+    .AddBufferBlock<int>()
+    .AddCustomBlock(new MultiplierBlock(10))
+    .AddActionBlock(Console.WriteLine)
+    .Build();
+```
+
+#### Asynchronous Custom Block
+
+```csharp
+using Tpl.Dataflow.Builder.Abstractions;
+
+public class HttpFetchBlock : AsyncPropagatorBlock<string, string>
+{
+    private readonly HttpClient _httpClient;
+    
+    public HttpFetchBlock(HttpClient httpClient) => _httpClient = httpClient;
+    
+    protected override async Task<string> TransformAsync(string url)
+    {
+        return await _httpClient.GetStringAsync(url);
+    }
+}
+
+// Usage with options
+public class ThrottledProcessor : AsyncPropagatorBlock<int, int>
+{
+    public ThrottledProcessor() 
+        : base(new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 4 })
+    { }
+    
+    protected override async Task<int> TransformAsync(int input)
+    {
+        await Task.Delay(100);
+        return input * 2;
+    }
+}
+```
+
+### Dependency Injection Integration
+
+#### Basic DI Resolution
+
+```csharp
+var services = new ServiceCollection()
+    .AddSingleton<MyCustomBlock>()
+    .AddTransient<AnotherBlock>()
+    .BuildServiceProvider();
+
+var pipeline = new DataflowPipelineBuilder(serviceProvider: services)
+    .AddBufferBlock<int>()
+    .AddCustomBlock<MyCustomBlock, int>()        // Resolved from DI
+    .AddCustomBlock<AnotherBlock, string>()      // Resolved from DI
+    .AddActionBlock(Console.WriteLine)
+    .Build();
+```
+
+#### Keyed Services (.NET 8+)
+
+Use keyed services when you have multiple implementations of the same interface:
+
+```csharp
+// Register keyed services
+var services = new ServiceCollection()
+    .AddKeyedSingleton<IMultiplierBlock, DoublerBlock>("double")
+    .AddKeyedSingleton<IMultiplierBlock, TriplerBlock>("triple")
+    .BuildServiceProvider();
+
+// Use specific implementation by key
+var doublePipeline = new DataflowPipelineBuilder(serviceProvider: services)
+    .AddBufferBlock<int>()
+    .AddKeyedCustomBlock<IMultiplierBlock, int>("double")
+    .AddActionBlock(x => Console.WriteLine($"Doubled: {x}"))
+    .Build();
+
+var triplePipeline = new DataflowPipelineBuilder(serviceProvider: services)
+    .AddBufferBlock<int>()
+    .AddKeyedCustomBlock<IMultiplierBlock, int>("triple")
+    .AddActionBlock(x => Console.WriteLine($"Tripled: {x}"))
+    .Build();
+
+doublePipeline.Post(5);  // Output: "Doubled: 10"
+triplePipeline.Post(5);  // Output: "Tripled: 15"
+```
+
 ## Supported Blocks
 
 | Block Type | Method | Description |
@@ -183,7 +290,10 @@ await foreach (var result in pipeline.Output.ReadAllAsync())
 | TransformManyBlock | `AddTransformManyBlock<TOut>(Func)` | Transforms each input to multiple outputs |
 | BatchBlock | `AddBatchBlock(batchSize)` | Groups inputs into arrays |
 | ActionBlock | `AddActionBlock(Action)` | Terminal block that consumes inputs |
-| Custom | `AddCustomBlock(IPropagatorBlock)` | Add any custom propagator block |
+| Custom (instance) | `AddCustomBlock(IPropagatorBlock)` | Add a custom propagator block instance |
+| Custom (factory) | `AddCustomBlock(Func<IPropagatorBlock>)` | Add a custom block via factory |
+| Custom (DI) | `AddCustomBlock<TBlock, TOut>()` | Resolve block from IServiceProvider |
+| Custom (Keyed DI) | `AddKeyedCustomBlock<TBlock, TOut>(key)` | Resolve keyed service from IServiceProvider |
 | Channel Source | `FromChannelSource(Channel/ChannelReader)` | Start pipeline from a channel |
 
 ## Build Methods
@@ -218,6 +328,22 @@ if (pipeline.TryReceive(out var item))
 - **Link Options**: `PropagateCompletion = true` (automatic completion propagation)
 - **Cancellation**: Default token can be set in builder constructor
 - **Block Names**: Auto-generated as `{BlockType}_{Index}` if not specified
+- **EnsureOrdered**: `false` by default on execution blocks for better parallel performance
+
+## Abstract Base Classes
+
+The `Tpl.Dataflow.Builder.Abstractions` package provides base classes for creating custom blocks:
+
+| Class | Description |
+|-------|-------------|
+| `PropagatorBlock<TIn, TOut>` | Base for synchronous transforms - override `Transform(TIn)` |
+| `AsyncPropagatorBlock<TIn, TOut>` | Base for async transforms - override `TransformAsync(TIn)` |
+
+Both classes:
+- Handle all `IPropagatorBlock<TIn, TOut>` interface plumbing
+- Accept optional `ExecutionDataflowBlockOptions` in constructor
+- Expose `Completion`, `InputCount`, `OutputCount` properties
+- Support `Complete()` and `Fault()` methods
 
 ## Target Frameworks
 
