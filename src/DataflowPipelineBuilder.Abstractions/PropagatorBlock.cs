@@ -96,7 +96,7 @@ public abstract class PropagatorBlock<TInput, TOutput> : IPropagatorBlock<TInput
     /// </summary>
     /// <param name="input">The input message to transform.</param>
     /// <returns>The transformed output message.</returns>
-    protected abstract TOutput Transform(TInput input);
+    public abstract TOutput Transform(TInput input);
 
     #region Explicit IPropagatorBlock Implementation
 

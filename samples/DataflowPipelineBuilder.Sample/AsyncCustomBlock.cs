@@ -2,7 +2,7 @@ using Tpl.Dataflow.Builder.Abstractions;
 
 internal class AsyncCustomBlock : AsyncPropagatorBlock<int, string>
 {
-    protected override async Task<string> TransformAsync(int input)
+    public override async Task<string> TransformAsync(int input)
     {
         await Task.Delay(100);
         return $"Value: {input}";

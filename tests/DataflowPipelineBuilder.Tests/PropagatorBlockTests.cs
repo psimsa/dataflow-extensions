@@ -154,12 +154,12 @@ public class PropagatorBlockTests
 
         public TestMultiplierBlock(int factor) => _factor = factor;
 
-        protected override int Transform(int input) => input * _factor;
+        public override int Transform(int input) => input * _factor;
     }
 
     private sealed class TestAsyncUppercaseBlock : AsyncPropagatorBlock<string, string>
     {
-        protected override async Task<string> TransformAsync(string input)
+        public override async Task<string> TransformAsync(string input)
         {
             await Task.Delay(1);
             return input.ToUpperInvariant();
@@ -173,7 +173,7 @@ public class PropagatorBlockTests
         {
         }
 
-        protected override int Transform(int input) => input * 2;
+        public override int Transform(int input) => input * 2;
     }
 
     private sealed class TestSlowBlock : AsyncPropagatorBlock<int, int>
@@ -183,7 +183,7 @@ public class PropagatorBlockTests
         {
         }
 
-        protected override async Task<int> TransformAsync(int input)
+        public override async Task<int> TransformAsync(int input)
         {
             await Task.Delay(1000);
             return input;
@@ -192,11 +192,11 @@ public class PropagatorBlockTests
 
     private sealed class TestDefaultConstructorBlock : PropagatorBlock<string, string>
     {
-        protected override string Transform(string input) => input;
+        public override string Transform(string input) => input;
     }
 
     private sealed class TestAsyncDefaultConstructorBlock : AsyncPropagatorBlock<string, string>
     {
-        protected override Task<string> TransformAsync(string input) => Task.FromResult(input);
+        public override Task<string> TransformAsync(string input) => Task.FromResult(input);
     }
 }

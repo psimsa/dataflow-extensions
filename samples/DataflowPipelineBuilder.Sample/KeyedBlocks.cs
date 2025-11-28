@@ -11,7 +11,7 @@ internal interface IMultiplierBlock : IPropagatorBlock<int, int>;
 /// </summary>
 internal sealed class DoublerBlock : PropagatorBlock<int, int>, IMultiplierBlock
 {
-    protected override int Transform(int input) => input * 2;
+    public override int Transform(int input) => input * 2;
 }
 
 /// <summary>
@@ -19,5 +19,5 @@ internal sealed class DoublerBlock : PropagatorBlock<int, int>, IMultiplierBlock
 /// </summary>
 internal sealed class TriplerBlock : AsyncPropagatorBlock<int, int>, IMultiplierBlock
 {
-    protected override Task<int> TransformAsync(int input) => Task.FromResult(input * 3);
+    public override Task<int> TransformAsync(int input) => Task.FromResult(input * 3);
 }

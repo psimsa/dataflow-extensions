@@ -272,22 +272,22 @@ public class ServiceProviderIntegrationTests
 
     public sealed class DoublerBlock : PropagatorBlock<int, int>, IMultiplierBlock
     {
-        protected override int Transform(int input) => input * 2;
+        public override int Transform(int input) => input * 2;
     }
 
     public sealed class TriplerBlock : PropagatorBlock<int, int>, IMultiplierBlock
     {
-        protected override int Transform(int input) => input * 3;
+        public override int Transform(int input) => input * 3;
     }
 
     public sealed class TestDoublerBlock : PropagatorBlock<int, int>
     {
-        protected override int Transform(int input) => input * 2;
+        public override int Transform(int input) => input * 2;
     }
 
     public sealed class TestStringifierBlock : PropagatorBlock<int, string>
     {
-        protected override string Transform(int input) => input.ToString();
+        public override string Transform(int input) => input.ToString();
     }
 
     public sealed class TestLoggingBlock : PropagatorBlock<string, string>
@@ -296,7 +296,7 @@ public class ServiceProviderIntegrationTests
 
         public TestLoggingBlock(TestLogger logger) => _logger = logger;
 
-        protected override string Transform(string input)
+        public override string Transform(string input)
         {
             _logger.Log($"Transforming: {input}");
             return input.ToUpperInvariant();

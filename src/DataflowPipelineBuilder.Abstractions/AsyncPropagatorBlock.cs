@@ -100,7 +100,7 @@ public abstract class AsyncPropagatorBlock<TInput, TOutput> : IPropagatorBlock<T
     /// </summary>
     /// <param name="input">The input message to transform.</param>
     /// <returns>A task representing the asynchronous transform operation that yields the transformed output.</returns>
-    protected abstract Task<TOutput> TransformAsync(TInput input);
+    public abstract Task<TOutput> TransformAsync(TInput input);
 
     #region Explicit IPropagatorBlock Implementation
 
