@@ -1,5 +1,6 @@
 using System.Threading.Channels;
 using System.Threading.Tasks.Dataflow;
+using Microsoft.Extensions.DependencyInjection;
 using Tpl.Dataflow.Builder.Abstractions;
 using Tpl.Dataflow.Builder.Blocks;
 
@@ -209,6 +210,54 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
             ?? throw new InvalidOperationException(
                 $"Unable to resolve service for type '{typeof(TBlock).Name}' from the service provider. " +
                 "Ensure the type is registered in the dependency injection container.");
+
+        AddBlock(name, block, typeof(TOutput), typeof(TNewOutput),
+            (target, linkOptions) => block.LinkTo((ITargetBlock<TNewOutput>)target, linkOptions));
+
+        return new DataflowPipelineBuilder<TInput, TNewOutput>(_defaultLinkOptions, _defaultCancellationToken, _blocks, _serviceProvider);
+    }
+
+    /// <summary>
+    /// Adds a custom propagator block to the pipeline by resolving a keyed service from the service provider.
+    /// </summary>
+    /// <typeparam name="TBlock">The type of the custom block to resolve. Must implement IPropagatorBlock&lt;TOutput, TNewOutput&gt;.</typeparam>
+    /// <typeparam name="TNewOutput">The output type of the custom block.</typeparam>
+    /// <param name="key">The key used to identify the service registration.</param>
+    /// <param name="name">Optional name for the block. If null, auto-generated.</param>
+    /// <returns>A builder to continue building the pipeline.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when no service provider was configured, or when the keyed service cannot be resolved.</exception>
+    /// <example>
+    /// <code>
+    /// // Register keyed blocks in DI:
+    /// services.AddKeyedTransient&lt;IMyBlock, DoubleMultiplier&gt;("double");
+    /// services.AddKeyedTransient&lt;IMyBlock, TripleMultiplier&gt;("triple");
+    /// 
+    /// // Use specific implementation in a pipeline:
+    /// var pipeline = new DataflowPipelineBuilder(serviceProvider: serviceProvider)
+    ///     .AddBufferBlock&lt;int&gt;()
+    ///     .AddKeyedCustomBlock&lt;IMyBlock, int&gt;("double")
+    ///     .AddActionBlock(Console.WriteLine)
+    ///     .Build();
+    /// </code>
+    /// </example>
+    public DataflowPipelineBuilder<TInput, TNewOutput> AddKeyedCustomBlock<TBlock, TNewOutput>(
+        object key,
+        string? name = null)
+        where TBlock : IPropagatorBlock<TOutput, TNewOutput>
+    {
+        ArgumentNullException.ThrowIfNull(key);
+
+        if (_serviceProvider is null)
+        {
+            throw new InvalidOperationException(
+                $"Cannot resolve keyed block of type '{typeof(TBlock).Name}' with key '{key}' because no IServiceProvider was configured. " +
+                "Pass a service provider to the DataflowPipelineBuilder constructor.");
+        }
+
+        var block = _serviceProvider.GetKeyedService<TBlock>(key)
+            ?? throw new InvalidOperationException(
+                $"Unable to resolve keyed service for type '{typeof(TBlock).Name}' with key '{key}' from the service provider. " +
+                "Ensure the type is registered as a keyed service in the dependency injection container.");
 
         AddBlock(name, block, typeof(TOutput), typeof(TNewOutput),
             (target, linkOptions) => block.LinkTo((ITargetBlock<TNewOutput>)target, linkOptions));
