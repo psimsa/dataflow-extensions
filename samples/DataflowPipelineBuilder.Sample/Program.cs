@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using Tpl.Dataflow.Builder;
 
 Console.WriteLine("=== DataflowPipelineBuilder Sample ===\n");
@@ -157,5 +158,62 @@ await foreach (var result in namedPipeline.ToAsyncEnumerable())
 {
     Console.WriteLine($"  Result: {result}");
 }
+
+Console.WriteLine();
+
+var sp = new ServiceCollection()
+    .AddSingleton<CustomBlock>()
+    .AddSingleton<AsyncCustomBlock>()
+    .AddKeyedSingleton<IMultiplierBlock, DoublerBlock>("double")
+    .AddKeyedSingleton<IMultiplierBlock, TriplerBlock>("triple")
+    .BuildServiceProvider();
+
+// Example 7: Custom Blocks from Service Provider
+Console.WriteLine("Example 7: Custom Blocks from Service Provider");
+Console.WriteLine("-----------------------------------------------");
+
+await using var customBlockPipeline = new DataflowPipelineBuilder(serviceProvider: sp)
+    .AddBufferBlock<int>()
+    .AddCustomBlock<CustomBlock, int>()
+    .AddCustomBlock<AsyncCustomBlock, string>()
+    .AddActionBlock(x => Console.WriteLine($"  Final Output: {x}"))
+    .Build();
+
+for (int i = 1; i <= 3; i++)
+{
+    customBlockPipeline.Post(i);
+}
+customBlockPipeline.Complete();
+await customBlockPipeline.Completion;
+
+Console.WriteLine();
+
+// Example 8: Keyed Services - Different implementations of same interface
+Console.WriteLine("Example 8: Keyed Services");
+Console.WriteLine("--------------------------");
+
+Console.WriteLine("  Using 'double' key (multiplies by 2):");
+await using var doublePipeline = new DataflowPipelineBuilder(serviceProvider: sp)
+    .AddBufferBlock<int>()
+    .AddKeyedCustomBlock<IMultiplierBlock, int>("double")
+    .AddActionBlock(x => Console.WriteLine($"    Input * 2 = {x}"))
+    .Build();
+
+doublePipeline.Post(5);
+doublePipeline.Post(10);
+doublePipeline.Complete();
+await doublePipeline.Completion;
+
+Console.WriteLine("  Using 'triple' key (multiplies by 3):");
+await using var triplePipeline = new DataflowPipelineBuilder(serviceProvider: sp)
+    .AddBufferBlock<int>()
+    .AddKeyedCustomBlock<IMultiplierBlock, int>("triple")
+    .AddActionBlock(x => Console.WriteLine($"    Input * 3 = {x}"))
+    .Build();
+
+triplePipeline.Post(5);
+triplePipeline.Post(10);
+triplePipeline.Complete();
+await triplePipeline.Completion;
 
 Console.WriteLine("\n=== Sample Complete ===");
