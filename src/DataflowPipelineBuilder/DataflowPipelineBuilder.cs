@@ -19,18 +19,22 @@ public sealed class DataflowPipelineBuilder
 {
     private readonly DataflowLinkOptions _defaultLinkOptions;
     private readonly CancellationToken _defaultCancellationToken;
+    private readonly IServiceProvider? _serviceProvider;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DataflowPipelineBuilder"/> class.
     /// </summary>
     /// <param name="defaultLinkOptions">Default link options applied to all block connections. If null, PropagateCompletion is enabled by default.</param>
     /// <param name="defaultCancellationToken">Default cancellation token applied to all blocks that support cancellation.</param>
+    /// <param name="serviceProvider">Optional service provider for resolving custom blocks via dependency injection.</param>
     public DataflowPipelineBuilder(
         DataflowLinkOptions? defaultLinkOptions = null,
-        CancellationToken defaultCancellationToken = default)
+        CancellationToken defaultCancellationToken = default,
+        IServiceProvider? serviceProvider = null)
     {
         _defaultLinkOptions = defaultLinkOptions ?? new DataflowLinkOptions { PropagateCompletion = true };
         _defaultCancellationToken = defaultCancellationToken;
+        _serviceProvider = serviceProvider;
     }
 
     /// <summary>
@@ -49,7 +53,7 @@ public sealed class DataflowPipelineBuilder
         var descriptor = DataflowBuilderHelpers.CreateDescriptor(name, block, typeof(T), typeof(T), 0,
             (target, linkOptions) => block.LinkTo((ITargetBlock<T>)target, linkOptions));
 
-        return new DataflowPipelineBuilder<T, T>(_defaultLinkOptions, _defaultCancellationToken, [descriptor]);
+        return new DataflowPipelineBuilder<T, T>(_defaultLinkOptions, _defaultCancellationToken, [descriptor], _serviceProvider);
     }
 
     /// <summary>
@@ -75,7 +79,7 @@ public sealed class DataflowPipelineBuilder
         var descriptor = DataflowBuilderHelpers.CreateDescriptor(name, block, typeof(TInput), typeof(TOutput), 0,
             (target, linkOptions) => block.LinkTo((ITargetBlock<TOutput>)target, linkOptions));
 
-        return new DataflowPipelineBuilder<TInput, TOutput>(_defaultLinkOptions, _defaultCancellationToken, [descriptor]);
+        return new DataflowPipelineBuilder<TInput, TOutput>(_defaultLinkOptions, _defaultCancellationToken, [descriptor], _serviceProvider);
     }
 
     /// <summary>
@@ -101,7 +105,7 @@ public sealed class DataflowPipelineBuilder
         var descriptor = DataflowBuilderHelpers.CreateDescriptor(name, block, typeof(TInput), typeof(TOutput), 0,
             (target, linkOptions) => block.LinkTo((ITargetBlock<TOutput>)target, linkOptions));
 
-        return new DataflowPipelineBuilder<TInput, TOutput>(_defaultLinkOptions, _defaultCancellationToken, [descriptor]);
+        return new DataflowPipelineBuilder<TInput, TOutput>(_defaultLinkOptions, _defaultCancellationToken, [descriptor], _serviceProvider);
     }
 
     /// <summary>
@@ -172,6 +176,6 @@ public sealed class DataflowPipelineBuilder
         var cancellationToken = options?.CancellationToken ?? _defaultCancellationToken;
         DataflowBuilderHelpers.StartChannelPumpingTask(reader, block, cancellationToken);
 
-        return new DataflowPipelineBuilder<T, T>(_defaultLinkOptions, _defaultCancellationToken, [descriptor]);
+        return new DataflowPipelineBuilder<T, T>(_defaultLinkOptions, _defaultCancellationToken, [descriptor], _serviceProvider);
     }
 }

@@ -16,16 +16,19 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
     private readonly CancellationToken _defaultCancellationToken;
     private readonly List<BlockDescriptor> _blocks;
     private readonly HashSet<string> _blockNames;
+    private readonly IServiceProvider? _serviceProvider;
 
     internal DataflowPipelineBuilder(
         DataflowLinkOptions defaultLinkOptions,
         CancellationToken defaultCancellationToken,
-        List<BlockDescriptor> blocks)
+        List<BlockDescriptor> blocks,
+        IServiceProvider? serviceProvider = null)
     {
         _defaultLinkOptions = defaultLinkOptions;
         _defaultCancellationToken = defaultCancellationToken;
         _blocks = blocks;
         _blockNames = new HashSet<string>(blocks.Select(b => b.Name));
+        _serviceProvider = serviceProvider;
     }
 
     /// <summary>
@@ -68,7 +71,7 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
         AddBlock(name, block, typeof(TOutput), typeof(TNewOutput),
             (target, linkOptions) => block.LinkTo((ITargetBlock<TNewOutput>)target, linkOptions));
 
-        return new DataflowPipelineBuilder<TInput, TNewOutput>(_defaultLinkOptions, _defaultCancellationToken, _blocks);
+        return new DataflowPipelineBuilder<TInput, TNewOutput>(_defaultLinkOptions, _defaultCancellationToken, _blocks, _serviceProvider);
     }
 
     /// <summary>
@@ -93,7 +96,7 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
         AddBlock(name, block, typeof(TOutput), typeof(TNewOutput),
             (target, linkOptions) => block.LinkTo((ITargetBlock<TNewOutput>)target, linkOptions));
 
-        return new DataflowPipelineBuilder<TInput, TNewOutput>(_defaultLinkOptions, _defaultCancellationToken, _blocks);
+        return new DataflowPipelineBuilder<TInput, TNewOutput>(_defaultLinkOptions, _defaultCancellationToken, _blocks, _serviceProvider);
     }
 
     /// <summary>
@@ -118,7 +121,7 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
         AddBlock(name, block, typeof(TOutput), typeof(TNewOutput),
             (target, linkOptions) => block.LinkTo((ITargetBlock<TNewOutput>)target, linkOptions));
 
-        return new DataflowPipelineBuilder<TInput, TNewOutput>(_defaultLinkOptions, _defaultCancellationToken, _blocks);
+        return new DataflowPipelineBuilder<TInput, TNewOutput>(_defaultLinkOptions, _defaultCancellationToken, _blocks, _serviceProvider);
     }
 
     /// <summary>
@@ -143,7 +146,7 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
         AddBlock(name, block, typeof(TOutput), typeof(TNewOutput),
             (target, linkOptions) => block.LinkTo((ITargetBlock<TNewOutput>)target, linkOptions));
 
-        return new DataflowPipelineBuilder<TInput, TNewOutput>(_defaultLinkOptions, _defaultCancellationToken, _blocks);
+        return new DataflowPipelineBuilder<TInput, TNewOutput>(_defaultLinkOptions, _defaultCancellationToken, _blocks, _serviceProvider);
     }
 
     /// <summary>
@@ -168,7 +171,49 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
         AddBlock(name, block, typeof(TOutput), typeof(TOutput[]),
             (target, linkOptions) => block.LinkTo((ITargetBlock<TOutput[]>)target, linkOptions));
 
-        return new DataflowPipelineBuilder<TInput, TOutput[]>(_defaultLinkOptions, _defaultCancellationToken, _blocks);
+        return new DataflowPipelineBuilder<TInput, TOutput[]>(_defaultLinkOptions, _defaultCancellationToken, _blocks, _serviceProvider);
+    }
+
+    /// <summary>
+    /// Adds a custom propagator block to the pipeline by resolving it from the service provider.
+    /// </summary>
+    /// <typeparam name="TBlock">The type of the custom block to resolve. Must implement IPropagatorBlock&lt;TOutput, TNewOutput&gt;.</typeparam>
+    /// <typeparam name="TNewOutput">The output type of the custom block.</typeparam>
+    /// <param name="name">Optional name for the block. If null, auto-generated.</param>
+    /// <returns>A builder to continue building the pipeline.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when no service provider was configured in the builder.</exception>
+    /// <example>
+    /// <code>
+    /// // Register your custom block in DI:
+    /// services.AddTransient&lt;MyMultiplierBlock&gt;();
+    /// 
+    /// // Use it in a pipeline:
+    /// var pipeline = new DataflowPipelineBuilder(serviceProvider: serviceProvider)
+    ///     .AddBufferBlock&lt;int&gt;()
+    ///     .AddCustomBlock&lt;MyMultiplierBlock, int&gt;()
+    ///     .AddActionBlock(Console.WriteLine)
+    ///     .Build();
+    /// </code>
+    /// </example>
+    public DataflowPipelineBuilder<TInput, TNewOutput> AddCustomBlock<TBlock, TNewOutput>(string? name = null)
+        where TBlock : IPropagatorBlock<TOutput, TNewOutput>
+    {
+        if (_serviceProvider is null)
+        {
+            throw new InvalidOperationException(
+                $"Cannot resolve block of type '{typeof(TBlock).Name}' because no IServiceProvider was configured. " +
+                "Pass a service provider to the DataflowPipelineBuilder constructor.");
+        }
+
+        var block = (TBlock?)_serviceProvider.GetService(typeof(TBlock))
+            ?? throw new InvalidOperationException(
+                $"Unable to resolve service for type '{typeof(TBlock).Name}' from the service provider. " +
+                "Ensure the type is registered in the dependency injection container.");
+
+        AddBlock(name, block, typeof(TOutput), typeof(TNewOutput),
+            (target, linkOptions) => block.LinkTo((ITargetBlock<TNewOutput>)target, linkOptions));
+
+        return new DataflowPipelineBuilder<TInput, TNewOutput>(_defaultLinkOptions, _defaultCancellationToken, _blocks, _serviceProvider);
     }
 
     /// <summary>
@@ -187,7 +232,7 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
         AddBlock(name, block, typeof(TOutput), typeof(TNewOutput),
             (target, linkOptions) => block.LinkTo((ITargetBlock<TNewOutput>)target, linkOptions));
 
-        return new DataflowPipelineBuilder<TInput, TNewOutput>(_defaultLinkOptions, _defaultCancellationToken, _blocks);
+        return new DataflowPipelineBuilder<TInput, TNewOutput>(_defaultLinkOptions, _defaultCancellationToken, _blocks, _serviceProvider);
     }
 
     /// <summary>
@@ -207,7 +252,7 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
         AddBlock(name, block, typeof(TOutput), typeof(TNewOutput),
             (target, linkOptions) => block.LinkTo((ITargetBlock<TNewOutput>)target, linkOptions));
 
-        return new DataflowPipelineBuilder<TInput, TNewOutput>(_defaultLinkOptions, _defaultCancellationToken, _blocks);
+        return new DataflowPipelineBuilder<TInput, TNewOutput>(_defaultLinkOptions, _defaultCancellationToken, _blocks, _serviceProvider);
     }
 
     /// <summary>

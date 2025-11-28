@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using Tpl.Dataflow.Builder;
 
 Console.WriteLine("=== DataflowPipelineBuilder Sample ===\n");
@@ -157,5 +158,30 @@ await foreach (var result in namedPipeline.ToAsyncEnumerable())
 {
     Console.WriteLine($"  Result: {result}");
 }
+
+Console.WriteLine();
+
+var sp = new ServiceCollection()
+.AddSingleton<CustomBlock>()
+.AddSingleton<AsyncCustomBlock>()
+.BuildServiceProvider();
+
+// Example 7: Custom Blocks from Service Provider
+Console.WriteLine("Example 7: Custom Blocks from Service Provider");
+Console.WriteLine("------------------------------------------");
+
+await using var customBlockPipeline = new DataflowPipelineBuilder(serviceProvider: sp)
+    .AddBufferBlock<int>()
+    .AddCustomBlock<CustomBlock, int>()
+    .AddCustomBlock<AsyncCustomBlock, string>()
+    .AddActionBlock(x => Console.WriteLine($"  Final Output: {x}"))
+    .Build();
+
+for (int i = 1; i <= 3; i++)
+{
+    customBlockPipeline.Post(i);
+}
+customBlockPipeline.Complete();
+await customBlockPipeline.Completion;
 
 Console.WriteLine("\n=== Sample Complete ===");
