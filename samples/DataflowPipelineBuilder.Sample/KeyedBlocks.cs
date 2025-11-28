@@ -17,7 +17,7 @@ internal sealed class DoublerBlock : PropagatorBlock<int, int>, IMultiplierBlock
 /// <summary>
 /// A block that triples the input value.
 /// </summary>
-internal sealed class TriplerBlock : PropagatorBlock<int, int>, IMultiplierBlock
+internal sealed class TriplerBlock : AsyncPropagatorBlock<int, int>, IMultiplierBlock
 {
-    protected override int Transform(int input) => input * 3;
+    protected override Task<int> TransformAsync(int input) => Task.FromResult(input * 3);
 }
