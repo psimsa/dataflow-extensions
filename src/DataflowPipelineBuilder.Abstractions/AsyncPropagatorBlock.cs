@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks.Dataflow;
 
 namespace Tpl.Dataflow.Builder.Abstractions;
@@ -36,7 +37,7 @@ namespace Tpl.Dataflow.Builder.Abstractions;
 ///     .Build();
 /// </code>
 /// </example>
-public abstract class AsyncPropagatorBlock<TInput, TOutput> : IPropagatorBlock<TInput, TOutput>
+public abstract class AsyncPropagatorBlock<TInput, TOutput> : IPropagatorBlock<TInput, TOutput>, IReceivableSourceBlock<TOutput>
 {
     private readonly TransformBlock<TInput, TOutput> _innerBlock;
 
@@ -101,6 +102,12 @@ public abstract class AsyncPropagatorBlock<TInput, TOutput> : IPropagatorBlock<T
     /// <param name="input">The input message to transform.</param>
     /// <returns>A task representing the asynchronous transform operation that yields the transformed output.</returns>
     public abstract Task<TOutput> TransformAsync(TInput input);
+    
+    /// <inheritdoc/>
+    public bool TryReceive(Predicate<TOutput>? filter, [MaybeNullWhen(false)] out TOutput item) => _innerBlock.TryReceive(filter, out item);
+
+    /// <inheritdoc/>
+    public bool TryReceiveAll([NotNullWhen(true)] out IList<TOutput>? items) => _innerBlock.TryReceiveAll(out items);
 
     #region Explicit IPropagatorBlock Implementation
 
