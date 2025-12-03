@@ -73,6 +73,13 @@ internal sealed class DataflowPipeline<TInput, TOutput> : IDataflowPipeline<TInp
     }
 
     /// <inheritdoc/>
+    public Task<bool> OutputAvailableAsync(CancellationToken cancellationToken = default)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        return _tail.OutputAvailableAsync(cancellationToken);
+    }
+
+    /// <inheritdoc/>
     public Task<TOutput> ReceiveAsync(CancellationToken cancellationToken = default)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);

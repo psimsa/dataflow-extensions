@@ -57,6 +57,12 @@ public interface IDataflowPipeline<in TInput, TOutput> : IDataflowPipeline<TInpu
     Task<TOutput> ReceiveAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Asynchronously checks if an output item is available to receive.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task<bool> OutputAvailableAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Tries to receive an item from the pipeline output.
     /// </summary>
     /// <param name="item">The received item, if available.</param>
