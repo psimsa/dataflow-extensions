@@ -11,7 +11,7 @@ A fluent builder pattern library for creating `System.Threading.Tasks.Dataflow` 
 - **Fluent API** - Chain dataflow blocks naturally with IntelliSense-friendly syntax
 - **Type Safety** - Full compile-time type checking between pipeline stages
 - **Auto-linking** - Blocks are automatically linked with completion propagation
-- **Custom Block Base Classes** - `PropagatorBlock<T,T>` and `AsyncPropagatorBlock<T,T>` for easy custom blocks
+- **Custom Block Base Classes** - `PropagatorBlock<T,T}`, `PropagatorManyBlock<TIn, TOut>` and `AsyncPropagatorBlock<T,T>`, `AsyncPropagatorManyBlock<TIn, TOut>` for easy custom blocks
 - **Dependency Injection** - Optional `IServiceProvider` integration for DI-based block resolution
 - **Keyed Services** - Support for .NET 8+ keyed service resolution
 - **Channel Integration** - Use System.Threading.Channels as input source or output sink
@@ -233,6 +233,22 @@ public class ThrottledProcessor : AsyncPropagatorBlock<int, int>
         return input * 2;
     }
 }
+
+// Synchronous 1:N custom block
+public class SplitterBlock : PropagatorManyBlock<string, char>
+{
+    protected override IEnumerable<char> Transform(string input) => input.ToCharArray();
+}
+
+// Asynchronous 1:N custom block
+public class AsyncSplitterBlock : AsyncPropagatorManyBlock<string, char>
+{
+    protected override async Task<IEnumerable<char>> TransformAsync(string input)
+    {
+        await Task.Delay(10);
+        return input.ToCharArray();
+    }
+}
 ```
 
 ### Dependency Injection Integration
@@ -337,7 +353,9 @@ The `Tpl.Dataflow.Builder.Abstractions` package provides base classes for creati
 | Class | Description |
 |-------|-------------|
 | `PropagatorBlock<TIn, TOut>` | Base for synchronous transforms - override `Transform(TIn)` |
+| `PropagatorManyBlock<TIn, TOut>` | Base for synchronous one-to-many transforms - override `Transform(TIn)` |
 | `AsyncPropagatorBlock<TIn, TOut>` | Base for async transforms - override `TransformAsync(TIn)` |
+| `AsyncPropagatorManyBlock<TIn, TOut>` | Base for async one-to-many transforms - override `TransformAsync(TIn)` |
 
 Both classes:
 - Handle all `IPropagatorBlock<TIn, TOut>` interface plumbing

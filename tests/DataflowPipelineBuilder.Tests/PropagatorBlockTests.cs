@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks.Dataflow;
 using Tpl.Dataflow.Builder.Abstractions;
 
@@ -199,4 +200,61 @@ public class PropagatorBlockTests
     {
         public override Task<string> TransformAsync(string input) => Task.FromResult(input);
     }
+
+    [Fact]
+    public async Task PropagatorManyBlock_SyncTransform_EmitsMultipleOutputs()
+    {
+        var splitter = new TestSplitterBlock();
+        var results = new List<char>();
+
+        var pipeline = new DataflowPipelineBuilder()
+            .AddBufferBlock<string>()
+            .AddCustomBlock(splitter)
+            .AddActionBlock(x => results.Add(x))
+            .Build();
+
+        pipeline.Post("ab");
+        pipeline.Post("cd");
+        pipeline.Complete();
+
+        await pipeline.Completion;
+
+        Assert.Equal(new[] { 'a', 'b', 'c', 'd' }, results);
+    }
+
+    [Fact]
+    public async Task AsyncPropagatorManyBlock_AsyncTransform_EmitsMultipleOutputs()
+    {
+        var splitter = new TestAsyncSplitterBlock();
+        var results = new List<char>();
+
+        var pipeline = new DataflowPipelineBuilder()
+            .AddBufferBlock<string>()
+            .AddCustomBlock(splitter)
+            .AddActionBlock(x => results.Add(x))
+            .Build();
+
+        pipeline.Post("hi");
+        pipeline.Post("yo");
+        pipeline.Complete();
+
+        await pipeline.Completion;
+
+        Assert.Equal(new[] { 'h', 'i', 'y', 'o' }, results);
+    }
+
+    private sealed class TestSplitterBlock : PropagatorManyBlock<string, char>
+    {
+        public override IEnumerable<char> Transform(string input) => input.ToCharArray();
+    }
+
+    private sealed class TestAsyncSplitterBlock : AsyncPropagatorManyBlock<string, char>
+    {
+        public override async Task<IEnumerable<char>> TransformAsync(string input)
+        {
+            await Task.Delay(1);
+            return input.ToCharArray();
+        }
+    }
 }
+

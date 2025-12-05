@@ -164,6 +164,8 @@ Console.WriteLine();
 var sp = new ServiceCollection()
     .AddSingleton<CustomBlock>()
     .AddSingleton<AsyncCustomBlock>()
+    .AddSingleton<SplitterBlock>()
+    .AddSingleton<AsyncSplitterBlock>()
     .AddKeyedSingleton<IMultiplierBlock, DoublerBlock>("double")
     .AddKeyedSingleton<IMultiplierBlock, TriplerBlock>("triple")
     .BuildServiceProvider();
@@ -215,5 +217,79 @@ triplePipeline.Post(5);
 triplePipeline.Post(10);
 triplePipeline.Complete();
 await triplePipeline.Completion;
+
+// Example 9: Custom Many Blocks (synchronous)
+Console.WriteLine("Example 9: Custom Many Blocks (synchronous)");
+Console.WriteLine("---------------------------------------------");
+
+var syncSplitter = new SplitterBlock();
+var syncResults = new List<char>();
+
+await using var syncManyPipeline = new DataflowPipelineBuilder()
+    .AddBufferBlock<string>()
+    .AddCustomBlock(syncSplitter)
+    .AddActionBlock(x =>
+    {
+        syncResults.Add(x);
+        Console.WriteLine($"  Received: {x}");
+    })
+    .Build();
+
+syncManyPipeline.Post("ab");
+syncManyPipeline.Post("cd");
+syncManyPipeline.Complete();
+
+await syncManyPipeline.Completion;
+
+Console.WriteLine();
+
+// Example 10: Custom Many Blocks (async)
+Console.WriteLine("Example 10: Custom Many Blocks (async)");
+Console.WriteLine("-----------------------------------------");
+
+var asyncSplitter = new AsyncSplitterBlock();
+var asyncResults = new List<char>();
+
+await using var asyncManyPipeline = new DataflowPipelineBuilder()
+    .AddBufferBlock<string>()
+    .AddCustomBlock(asyncSplitter)
+    .AddActionBlock(x =>
+    {
+        asyncResults.Add(x);
+        Console.WriteLine($"  Received (async): {x}");
+    })
+    .Build();
+
+asyncManyPipeline.Post("hi");
+asyncManyPipeline.Post("yo");
+asyncManyPipeline.Complete();
+
+await asyncManyPipeline.Completion;
+
+Console.WriteLine();
+
+// Example 11: DI-resolved Many Blocks
+Console.WriteLine("Example 11: DI-resolved Many Blocks");
+Console.WriteLine("------------------------------------");
+
+await using var diSyncMany = new DataflowPipelineBuilder(serviceProvider: sp)
+    .AddBufferBlock<string>()
+    .AddCustomBlock<SplitterBlock, char>()
+    .AddActionBlock(x => Console.WriteLine($"  DI Received: {x}"))
+    .Build();
+
+await diSyncMany.SendAsync("ab");
+diSyncMany.Complete();
+await diSyncMany.Completion;
+
+await using var diAsyncMany = new DataflowPipelineBuilder(serviceProvider: sp)
+    .AddBufferBlock<string>()
+    .AddCustomBlock<AsyncSplitterBlock, char>()
+    .AddActionBlock(x => Console.WriteLine($"  DI Received (async): {x}"))
+    .Build();
+
+await diAsyncMany.SendAsync("xy");
+diAsyncMany.Complete();
+await diAsyncMany.Completion;
 
 Console.WriteLine("\n=== Sample Complete ===");
