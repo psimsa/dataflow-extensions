@@ -23,7 +23,8 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
         DataflowLinkOptions defaultLinkOptions,
         CancellationToken defaultCancellationToken,
         List<BlockDescriptor> blocks,
-        IServiceProvider? serviceProvider = null)
+        IServiceProvider? serviceProvider = null
+    )
     {
         _defaultLinkOptions = defaultLinkOptions;
         _defaultCancellationToken = defaultCancellationToken;
@@ -40,12 +41,18 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
     /// <returns>A builder to continue building the pipeline.</returns>
     public DataflowPipelineBuilder<TInput, TOutput> AddBufferBlock(
         string? name = null,
-        DataflowBlockOptions? options = null)
+        DataflowBlockOptions? options = null
+    )
     {
         options = ApplyCancellationToken(options);
         var block = new BufferBlock<TOutput>(options ?? new DataflowBlockOptions());
-        AddBlock(name, block, typeof(TOutput), typeof(TOutput),
-            (target, linkOptions) => block.LinkTo((ITargetBlock<TOutput>)target, linkOptions));
+        AddBlock(
+            name,
+            block,
+            typeof(TOutput),
+            typeof(TOutput),
+            (target, linkOptions) => block.LinkTo((ITargetBlock<TOutput>)target, linkOptions)
+        );
 
         return this;
     }
@@ -63,16 +70,31 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
         Func<TOutput, TNewOutput> transform,
         string? name = null,
         bool ensureOrdered = false,
-        ExecutionDataflowBlockOptions? options = null)
+        ExecutionDataflowBlockOptions? options = null
+    )
     {
         ArgumentNullException.ThrowIfNull(transform);
 
-        var effectiveOptions = DataflowBuilderHelpers.ApplyExecutionOptions(options, _defaultCancellationToken, ensureOrdered);
+        var effectiveOptions = DataflowBuilderHelpers.ApplyExecutionOptions(
+            options,
+            _defaultCancellationToken,
+            ensureOrdered
+        );
         var block = new TransformBlock<TOutput, TNewOutput>(transform, effectiveOptions);
-        AddBlock(name, block, typeof(TOutput), typeof(TNewOutput),
-            (target, linkOptions) => block.LinkTo((ITargetBlock<TNewOutput>)target, linkOptions));
+        AddBlock(
+            name,
+            block,
+            typeof(TOutput),
+            typeof(TNewOutput),
+            (target, linkOptions) => block.LinkTo((ITargetBlock<TNewOutput>)target, linkOptions)
+        );
 
-        return new DataflowPipelineBuilder<TInput, TNewOutput>(_defaultLinkOptions, _defaultCancellationToken, _blocks, _serviceProvider);
+        return new DataflowPipelineBuilder<TInput, TNewOutput>(
+            _defaultLinkOptions,
+            _defaultCancellationToken,
+            _blocks,
+            _serviceProvider
+        );
     }
 
     /// <summary>
@@ -88,16 +110,31 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
         Func<TOutput, Task<TNewOutput>> transform,
         string? name = null,
         bool ensureOrdered = false,
-        ExecutionDataflowBlockOptions? options = null)
+        ExecutionDataflowBlockOptions? options = null
+    )
     {
         ArgumentNullException.ThrowIfNull(transform);
 
-        var effectiveOptions = DataflowBuilderHelpers.ApplyExecutionOptions(options, _defaultCancellationToken, ensureOrdered);
+        var effectiveOptions = DataflowBuilderHelpers.ApplyExecutionOptions(
+            options,
+            _defaultCancellationToken,
+            ensureOrdered
+        );
         var block = new TransformBlock<TOutput, TNewOutput>(transform, effectiveOptions);
-        AddBlock(name, block, typeof(TOutput), typeof(TNewOutput),
-            (target, linkOptions) => block.LinkTo((ITargetBlock<TNewOutput>)target, linkOptions));
+        AddBlock(
+            name,
+            block,
+            typeof(TOutput),
+            typeof(TNewOutput),
+            (target, linkOptions) => block.LinkTo((ITargetBlock<TNewOutput>)target, linkOptions)
+        );
 
-        return new DataflowPipelineBuilder<TInput, TNewOutput>(_defaultLinkOptions, _defaultCancellationToken, _blocks, _serviceProvider);
+        return new DataflowPipelineBuilder<TInput, TNewOutput>(
+            _defaultLinkOptions,
+            _defaultCancellationToken,
+            _blocks,
+            _serviceProvider
+        );
     }
 
     /// <summary>
@@ -113,16 +150,31 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
         Func<TOutput, IEnumerable<TNewOutput>> transform,
         string? name = null,
         bool ensureOrdered = false,
-        ExecutionDataflowBlockOptions? options = null)
+        ExecutionDataflowBlockOptions? options = null
+    )
     {
         ArgumentNullException.ThrowIfNull(transform);
 
-        var effectiveOptions = DataflowBuilderHelpers.ApplyExecutionOptions(options, _defaultCancellationToken, ensureOrdered);
+        var effectiveOptions = DataflowBuilderHelpers.ApplyExecutionOptions(
+            options,
+            _defaultCancellationToken,
+            ensureOrdered
+        );
         var block = new TransformManyBlock<TOutput, TNewOutput>(transform, effectiveOptions);
-        AddBlock(name, block, typeof(TOutput), typeof(TNewOutput),
-            (target, linkOptions) => block.LinkTo((ITargetBlock<TNewOutput>)target, linkOptions));
+        AddBlock(
+            name,
+            block,
+            typeof(TOutput),
+            typeof(TNewOutput),
+            (target, linkOptions) => block.LinkTo((ITargetBlock<TNewOutput>)target, linkOptions)
+        );
 
-        return new DataflowPipelineBuilder<TInput, TNewOutput>(_defaultLinkOptions, _defaultCancellationToken, _blocks, _serviceProvider);
+        return new DataflowPipelineBuilder<TInput, TNewOutput>(
+            _defaultLinkOptions,
+            _defaultCancellationToken,
+            _blocks,
+            _serviceProvider
+        );
     }
 
     /// <summary>
@@ -138,16 +190,31 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
         Func<TOutput, Task<IEnumerable<TNewOutput>>> transform,
         string? name = null,
         bool ensureOrdered = false,
-        ExecutionDataflowBlockOptions? options = null)
+        ExecutionDataflowBlockOptions? options = null
+    )
     {
         ArgumentNullException.ThrowIfNull(transform);
 
-        var effectiveOptions = DataflowBuilderHelpers.ApplyExecutionOptions(options, _defaultCancellationToken, ensureOrdered);
+        var effectiveOptions = DataflowBuilderHelpers.ApplyExecutionOptions(
+            options,
+            _defaultCancellationToken,
+            ensureOrdered
+        );
         var block = new TransformManyBlock<TOutput, TNewOutput>(transform, effectiveOptions);
-        AddBlock(name, block, typeof(TOutput), typeof(TNewOutput),
-            (target, linkOptions) => block.LinkTo((ITargetBlock<TNewOutput>)target, linkOptions));
+        AddBlock(
+            name,
+            block,
+            typeof(TOutput),
+            typeof(TNewOutput),
+            (target, linkOptions) => block.LinkTo((ITargetBlock<TNewOutput>)target, linkOptions)
+        );
 
-        return new DataflowPipelineBuilder<TInput, TNewOutput>(_defaultLinkOptions, _defaultCancellationToken, _blocks, _serviceProvider);
+        return new DataflowPipelineBuilder<TInput, TNewOutput>(
+            _defaultLinkOptions,
+            _defaultCancellationToken,
+            _blocks,
+            _serviceProvider
+        );
     }
 
     /// <summary>
@@ -160,19 +227,36 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
     public DataflowPipelineBuilder<TInput, TOutput[]> AddBatchBlock(
         int batchSize,
         string? name = null,
-        GroupingDataflowBlockOptions? options = null)
+        GroupingDataflowBlockOptions? options = null
+    )
     {
         if (batchSize <= 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(batchSize), "Batch size must be greater than zero.");
+            throw new ArgumentOutOfRangeException(
+                nameof(batchSize),
+                "Batch size must be greater than zero."
+            );
         }
 
         options = ApplyCancellationToken(options);
-        var block = new BatchBlock<TOutput>(batchSize, options ?? new GroupingDataflowBlockOptions());
-        AddBlock(name, block, typeof(TOutput), typeof(TOutput[]),
-            (target, linkOptions) => block.LinkTo((ITargetBlock<TOutput[]>)target, linkOptions));
+        var block = new BatchBlock<TOutput>(
+            batchSize,
+            options ?? new GroupingDataflowBlockOptions()
+        );
+        AddBlock(
+            name,
+            block,
+            typeof(TOutput),
+            typeof(TOutput[]),
+            (target, linkOptions) => block.LinkTo((ITargetBlock<TOutput[]>)target, linkOptions)
+        );
 
-        return new DataflowPipelineBuilder<TInput, TOutput[]>(_defaultLinkOptions, _defaultCancellationToken, _blocks, _serviceProvider);
+        return new DataflowPipelineBuilder<TInput, TOutput[]>(
+            _defaultLinkOptions,
+            _defaultCancellationToken,
+            _blocks,
+            _serviceProvider
+        );
     }
 
     /// <summary>
@@ -187,7 +271,7 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
     /// <code>
     /// // Register your custom block in DI:
     /// services.AddTransient&lt;MyMultiplierBlock&gt;();
-    /// 
+    ///
     /// // Use it in a pipeline:
     /// var pipeline = new DataflowPipelineBuilder(serviceProvider: serviceProvider)
     ///     .AddBufferBlock&lt;int&gt;()
@@ -196,25 +280,40 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
     ///     .Build();
     /// </code>
     /// </example>
-    public DataflowPipelineBuilder<TInput, TNewOutput> AddCustomBlock<TBlock, TNewOutput>(string? name = null)
+    public DataflowPipelineBuilder<TInput, TNewOutput> AddCustomBlock<TBlock, TNewOutput>(
+        string? name = null
+    )
         where TBlock : IPropagatorBlock<TOutput, TNewOutput>
     {
         if (_serviceProvider is null)
         {
             throw new InvalidOperationException(
-                $"Cannot resolve block of type '{typeof(TBlock).Name}' because no IServiceProvider was configured. " +
-                "Pass a service provider to the DataflowPipelineBuilder constructor.");
+                $"Cannot resolve block of type '{typeof(TBlock).Name}' because no IServiceProvider was configured. "
+                    + "Pass a service provider to the DataflowPipelineBuilder constructor."
+            );
         }
 
-        var block = (TBlock?)_serviceProvider.GetService(typeof(TBlock))
+        var block =
+            (TBlock?)_serviceProvider.GetService(typeof(TBlock))
             ?? throw new InvalidOperationException(
-                $"Unable to resolve service for type '{typeof(TBlock).Name}' from the service provider. " +
-                "Ensure the type is registered in the dependency injection container.");
+                $"Unable to resolve service for type '{typeof(TBlock).Name}' from the service provider. "
+                    + "Ensure the type is registered in the dependency injection container."
+            );
 
-        AddBlock(name, block, typeof(TOutput), typeof(TNewOutput),
-            (target, linkOptions) => block.LinkTo((ITargetBlock<TNewOutput>)target, linkOptions));
+        AddBlock(
+            name,
+            block,
+            typeof(TOutput),
+            typeof(TNewOutput),
+            (target, linkOptions) => block.LinkTo((ITargetBlock<TNewOutput>)target, linkOptions)
+        );
 
-        return new DataflowPipelineBuilder<TInput, TNewOutput>(_defaultLinkOptions, _defaultCancellationToken, _blocks, _serviceProvider);
+        return new DataflowPipelineBuilder<TInput, TNewOutput>(
+            _defaultLinkOptions,
+            _defaultCancellationToken,
+            _blocks,
+            _serviceProvider
+        );
     }
 
     /// <summary>
@@ -231,7 +330,7 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
     /// // Register keyed blocks in DI:
     /// services.AddKeyedTransient&lt;IMyBlock, DoubleMultiplier&gt;("double");
     /// services.AddKeyedTransient&lt;IMyBlock, TripleMultiplier&gt;("triple");
-    /// 
+    ///
     /// // Use specific implementation in a pipeline:
     /// var pipeline = new DataflowPipelineBuilder(serviceProvider: serviceProvider)
     ///     .AddBufferBlock&lt;int&gt;()
@@ -242,7 +341,8 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
     /// </example>
     public DataflowPipelineBuilder<TInput, TNewOutput> AddKeyedCustomBlock<TBlock, TNewOutput>(
         object key,
-        string? name = null)
+        string? name = null
+    )
         where TBlock : IPropagatorBlock<TOutput, TNewOutput>
     {
         ArgumentNullException.ThrowIfNull(key);
@@ -250,19 +350,32 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
         if (_serviceProvider is null)
         {
             throw new InvalidOperationException(
-                $"Cannot resolve keyed block of type '{typeof(TBlock).Name}' with key '{key}' because no IServiceProvider was configured. " +
-                "Pass a service provider to the DataflowPipelineBuilder constructor.");
+                $"Cannot resolve keyed block of type '{typeof(TBlock).Name}' with key '{key}' because no IServiceProvider was configured. "
+                    + "Pass a service provider to the DataflowPipelineBuilder constructor."
+            );
         }
 
-        var block = _serviceProvider.GetKeyedService<TBlock>(key)
+        var block =
+            _serviceProvider.GetKeyedService<TBlock>(key)
             ?? throw new InvalidOperationException(
-                $"Unable to resolve keyed service for type '{typeof(TBlock).Name}' with key '{key}' from the service provider. " +
-                "Ensure the type is registered as a keyed service in the dependency injection container.");
+                $"Unable to resolve keyed service for type '{typeof(TBlock).Name}' with key '{key}' from the service provider. "
+                    + "Ensure the type is registered as a keyed service in the dependency injection container."
+            );
 
-        AddBlock(name, block, typeof(TOutput), typeof(TNewOutput),
-            (target, linkOptions) => block.LinkTo((ITargetBlock<TNewOutput>)target, linkOptions));
+        AddBlock(
+            name,
+            block,
+            typeof(TOutput),
+            typeof(TNewOutput),
+            (target, linkOptions) => block.LinkTo((ITargetBlock<TNewOutput>)target, linkOptions)
+        );
 
-        return new DataflowPipelineBuilder<TInput, TNewOutput>(_defaultLinkOptions, _defaultCancellationToken, _blocks, _serviceProvider);
+        return new DataflowPipelineBuilder<TInput, TNewOutput>(
+            _defaultLinkOptions,
+            _defaultCancellationToken,
+            _blocks,
+            _serviceProvider
+        );
     }
 
     /// <summary>
@@ -274,14 +387,25 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
     /// <returns>A builder to continue building the pipeline.</returns>
     public DataflowPipelineBuilder<TInput, TNewOutput> AddCustomBlock<TNewOutput>(
         IPropagatorBlock<TOutput, TNewOutput> block,
-        string? name = null)
+        string? name = null
+    )
     {
         ArgumentNullException.ThrowIfNull(block);
 
-        AddBlock(name, block, typeof(TOutput), typeof(TNewOutput),
-            (target, linkOptions) => block.LinkTo((ITargetBlock<TNewOutput>)target, linkOptions));
+        AddBlock(
+            name,
+            block,
+            typeof(TOutput),
+            typeof(TNewOutput),
+            (target, linkOptions) => block.LinkTo((ITargetBlock<TNewOutput>)target, linkOptions)
+        );
 
-        return new DataflowPipelineBuilder<TInput, TNewOutput>(_defaultLinkOptions, _defaultCancellationToken, _blocks, _serviceProvider);
+        return new DataflowPipelineBuilder<TInput, TNewOutput>(
+            _defaultLinkOptions,
+            _defaultCancellationToken,
+            _blocks,
+            _serviceProvider
+        );
     }
 
     /// <summary>
@@ -293,15 +417,26 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
     /// <returns>A builder to continue building the pipeline.</returns>
     public DataflowPipelineBuilder<TInput, TNewOutput> AddCustomBlock<TNewOutput>(
         Func<IPropagatorBlock<TOutput, TNewOutput>> factory,
-        string? name = null)
+        string? name = null
+    )
     {
         ArgumentNullException.ThrowIfNull(factory);
 
         var block = factory();
-        AddBlock(name, block, typeof(TOutput), typeof(TNewOutput),
-            (target, linkOptions) => block.LinkTo((ITargetBlock<TNewOutput>)target, linkOptions));
+        AddBlock(
+            name,
+            block,
+            typeof(TOutput),
+            typeof(TNewOutput),
+            (target, linkOptions) => block.LinkTo((ITargetBlock<TNewOutput>)target, linkOptions)
+        );
 
-        return new DataflowPipelineBuilder<TInput, TNewOutput>(_defaultLinkOptions, _defaultCancellationToken, _blocks, _serviceProvider);
+        return new DataflowPipelineBuilder<TInput, TNewOutput>(
+            _defaultLinkOptions,
+            _defaultCancellationToken,
+            _blocks,
+            _serviceProvider
+        );
     }
 
     /// <summary>
@@ -316,15 +451,24 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
         Action<TOutput> action,
         string? name = null,
         bool ensureOrdered = false,
-        ExecutionDataflowBlockOptions? options = null)
+        ExecutionDataflowBlockOptions? options = null
+    )
     {
         ArgumentNullException.ThrowIfNull(action);
 
-        var effectiveOptions = DataflowBuilderHelpers.ApplyExecutionOptions(options, _defaultCancellationToken, ensureOrdered);
+        var effectiveOptions = DataflowBuilderHelpers.ApplyExecutionOptions(
+            options,
+            _defaultCancellationToken,
+            ensureOrdered
+        );
         var block = new ActionBlock<TOutput>(action, effectiveOptions);
         AddBlock(name, block, typeof(TOutput), outputType: null, linkToNext: null);
 
-        return new DataflowPipelineBuilder<TInput>(_defaultLinkOptions, _defaultCancellationToken, _blocks);
+        return new DataflowPipelineBuilder<TInput>(
+            _defaultLinkOptions,
+            _defaultCancellationToken,
+            _blocks
+        );
     }
 
     /// <summary>
@@ -339,15 +483,24 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
         Func<TOutput, Task> action,
         string? name = null,
         bool ensureOrdered = false,
-        ExecutionDataflowBlockOptions? options = null)
+        ExecutionDataflowBlockOptions? options = null
+    )
     {
         ArgumentNullException.ThrowIfNull(action);
 
-        var effectiveOptions = DataflowBuilderHelpers.ApplyExecutionOptions(options, _defaultCancellationToken, ensureOrdered);
+        var effectiveOptions = DataflowBuilderHelpers.ApplyExecutionOptions(
+            options,
+            _defaultCancellationToken,
+            ensureOrdered
+        );
         var block = new ActionBlock<TOutput>(action, effectiveOptions);
         AddBlock(name, block, typeof(TOutput), outputType: null, linkToNext: null);
 
-        return new DataflowPipelineBuilder<TInput>(_defaultLinkOptions, _defaultCancellationToken, _blocks);
+        return new DataflowPipelineBuilder<TInput>(
+            _defaultLinkOptions,
+            _defaultCancellationToken,
+            _blocks
+        );
     }
 
     /// <summary>
@@ -359,7 +512,9 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
     {
         if (_blocks.Count == 0)
         {
-            throw new InvalidOperationException("Cannot build an empty pipeline. Add at least one block.");
+            throw new InvalidOperationException(
+                "Cannot build an empty pipeline. Add at least one block."
+            );
         }
 
         DataflowBuilderHelpers.LinkBlocks(_blocks, _defaultLinkOptions);
@@ -393,16 +548,21 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
     /// }
     /// </code>
     /// </example>
-    public IDataflowChannelPipeline<TInput, TOutput> BuildAsChannel(BoundedChannelOptions? options = null)
+    public IDataflowChannelPipeline<TInput, TOutput> BuildAsChannel(
+        BoundedChannelOptions? options = null
+    )
     {
         if (_blocks.Count == 0)
         {
-            throw new InvalidOperationException("Cannot build an empty pipeline. Add at least one block.");
+            throw new InvalidOperationException(
+                "Cannot build an empty pipeline. Add at least one block."
+            );
         }
 
         var (actionBlock, channelReader) = DataflowBuilderHelpers.CreateChannelOutputBlock<TOutput>(
             options,
-            _defaultCancellationToken);
+            _defaultCancellationToken
+        );
 
         AddBlock("ChannelOutput", actionBlock, typeof(TOutput), outputType: null, linkToNext: null);
 
@@ -411,7 +571,12 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
         var head = (ITargetBlock<TInput>)_blocks[0].Block;
         var blocksDictionary = _blocks.ToDictionary(b => b.Name, b => b.Block);
 
-        return new DataflowChannelPipeline<TInput, TOutput>(head, actionBlock, blocksDictionary, channelReader);
+        return new DataflowChannelPipeline<TInput, TOutput>(
+            head,
+            actionBlock,
+            blocksDictionary,
+            channelReader
+        );
     }
 
     private void AddBlock(
@@ -419,14 +584,24 @@ public sealed class DataflowPipelineBuilder<TInput, TOutput>
         IDataflowBlock block,
         Type inputType,
         Type? outputType,
-        Action<IDataflowBlock, DataflowLinkOptions>? linkToNext = null)
+        Action<IDataflowBlock, DataflowLinkOptions>? linkToNext = null
+    )
     {
-        DataflowBuilderHelpers.AddBlock(_blocks, _blockNames, name, block, inputType, outputType, linkToNext);
+        DataflowBuilderHelpers.AddBlock(
+            _blocks,
+            _blockNames,
+            name,
+            block,
+            inputType,
+            outputType,
+            linkToNext
+        );
     }
 
     private DataflowBlockOptions? ApplyCancellationToken(DataflowBlockOptions? options) =>
         DataflowBuilderHelpers.ApplyCancellationToken(options, _defaultCancellationToken);
 
-    private GroupingDataflowBlockOptions? ApplyCancellationToken(GroupingDataflowBlockOptions? options) =>
-        DataflowBuilderHelpers.ApplyCancellationToken(options, _defaultCancellationToken);
+    private GroupingDataflowBlockOptions? ApplyCancellationToken(
+        GroupingDataflowBlockOptions? options
+    ) => DataflowBuilderHelpers.ApplyCancellationToken(options, _defaultCancellationToken);
 }

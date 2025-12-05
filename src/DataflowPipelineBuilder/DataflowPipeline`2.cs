@@ -19,7 +19,8 @@ internal sealed class DataflowPipeline<TInput, TOutput> : IDataflowPipeline<TInp
     public DataflowPipeline(
         ITargetBlock<TInput> head,
         IReceivableSourceBlock<TOutput> tail,
-        IReadOnlyDictionary<string, IDataflowBlock> blocks)
+        IReadOnlyDictionary<string, IDataflowBlock> blocks
+    )
     {
         _head = head ?? throw new ArgumentNullException(nameof(head));
         _tail = tail ?? throw new ArgumentNullException(nameof(tail));
@@ -61,7 +62,8 @@ internal sealed class DataflowPipeline<TInput, TOutput> : IDataflowPipeline<TInp
 
     /// <inheritdoc/>
     public async IAsyncEnumerable<TOutput> ToAsyncEnumerable(
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        [EnumeratorCancellation] CancellationToken cancellationToken = default
+    )
     {
         while (await _tail.OutputAvailableAsync(cancellationToken).ConfigureAwait(false))
         {

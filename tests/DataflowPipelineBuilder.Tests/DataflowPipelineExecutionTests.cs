@@ -138,19 +138,21 @@ public class DataflowPipelineExecutionTests
 
         await using var pipeline = new DataflowPipelineBuilder()
             .AddBufferBlock<int>()
-            .AddActionBlock(async (int x) =>
-            {
-                await Task.Delay(10);
-                await semaphore.WaitAsync();
-                try
+            .AddActionBlock(
+                async (int x) =>
                 {
-                    results.Add(x * 10);
+                    await Task.Delay(10);
+                    await semaphore.WaitAsync();
+                    try
+                    {
+                        results.Add(x * 10);
+                    }
+                    finally
+                    {
+                        semaphore.Release();
+                    }
                 }
-                finally
-                {
-                    semaphore.Release();
-                }
-            })
+            )
             .Build();
 
         pipeline.Post(1);
@@ -166,9 +168,7 @@ public class DataflowPipelineExecutionTests
     [Fact]
     public async Task Pipeline_SendAsync_ReturnsTrue_WhenAccepted()
     {
-        await using var pipeline = new DataflowPipelineBuilder()
-            .AddBufferBlock<int>()
-            .Build();
+        await using var pipeline = new DataflowPipelineBuilder().AddBufferBlock<int>().Build();
 
         var accepted = await pipeline.SendAsync(42);
 
@@ -178,9 +178,7 @@ public class DataflowPipelineExecutionTests
     [Fact]
     public async Task Pipeline_TryReceive_ReturnsTrue_WhenItemAvailable()
     {
-        await using var pipeline = new DataflowPipelineBuilder()
-            .AddBufferBlock<int>()
-            .Build();
+        await using var pipeline = new DataflowPipelineBuilder().AddBufferBlock<int>().Build();
 
         pipeline.Post(42);
         await Task.Delay(50);
@@ -210,17 +208,18 @@ public class DataflowPipelineExecutionTests
     [Fact]
     public async Task Pipeline_AsObservable_EmitsItems()
     {
-        await using var pipeline = new DataflowPipelineBuilder()
-            .AddBufferBlock<int>()
-            .Build();
+        await using var pipeline = new DataflowPipelineBuilder().AddBufferBlock<int>().Build();
 
         var results = new List<int>();
         var tcs = new TaskCompletionSource();
 
         var observable = pipeline.AsObservable();
-        using var subscription = observable.Subscribe(new DelegateObserver<int>(
-            onNext: x => results.Add(x),
-            onCompleted: () => tcs.SetResult()));
+        using var subscription = observable.Subscribe(
+            new DelegateObserver<int>(
+                onNext: x => results.Add(x),
+                onCompleted: () => tcs.SetResult()
+            )
+        );
 
         pipeline.Post(1);
         pipeline.Post(2);
@@ -237,8 +236,7 @@ public class DataflowPipelineExecutionTests
     {
         using var cts = new CancellationTokenSource();
 
-        await using var pipeline = new DataflowPipelineBuilder(
-                defaultCancellationToken: cts.Token)
+        await using var pipeline = new DataflowPipelineBuilder(defaultCancellationToken: cts.Token)
             .AddBufferBlock<int>()
             .Build();
 
@@ -276,9 +274,15 @@ public class DataflowPipelineExecutionTests
     }
 }
 
-internal sealed class DelegateObserver<T>(Action<T> onNext, Action? onCompleted = null, Action<Exception>? onError = null) : IObserver<T>
+internal sealed class DelegateObserver<T>(
+    Action<T> onNext,
+    Action? onCompleted = null,
+    Action<Exception>? onError = null
+) : IObserver<T>
 {
     public void OnCompleted() => onCompleted?.Invoke();
+
     public void OnError(Exception error) => onError?.Invoke(error);
+
     public void OnNext(T value) => onNext(value);
 }

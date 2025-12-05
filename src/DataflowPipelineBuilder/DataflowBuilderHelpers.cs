@@ -52,7 +52,8 @@ internal static class DataflowBuilderHelpers
     /// <returns>The modified options, or null if no changes were needed.</returns>
     public static DataflowBlockOptions? ApplyCancellationToken(
         DataflowBlockOptions? options,
-        CancellationToken defaultCancellationToken)
+        CancellationToken defaultCancellationToken
+    )
     {
         if (defaultCancellationToken == default)
         {
@@ -79,14 +80,12 @@ internal static class DataflowBuilderHelpers
     public static ExecutionDataflowBlockOptions ApplyExecutionOptions(
         ExecutionDataflowBlockOptions? options,
         CancellationToken defaultCancellationToken,
-        bool ensureOrdered)
+        bool ensureOrdered
+    )
     {
         if (options is null)
         {
-            options = new ExecutionDataflowBlockOptions
-            {
-                EnsureOrdered = ensureOrdered
-            };
+            options = new ExecutionDataflowBlockOptions { EnsureOrdered = ensureOrdered };
         }
         else if (options.EnsureOrdered != ensureOrdered)
         {
@@ -99,7 +98,7 @@ internal static class DataflowBuilderHelpers
                 MaxMessagesPerTask = options.MaxMessagesPerTask,
                 NameFormat = options.NameFormat,
                 TaskScheduler = options.TaskScheduler,
-                EnsureOrdered = ensureOrdered
+                EnsureOrdered = ensureOrdered,
             };
             options = newOptions;
         }
@@ -120,7 +119,8 @@ internal static class DataflowBuilderHelpers
     [Obsolete("Use ApplyExecutionOptions instead to also set EnsureOrdered.")]
     public static ExecutionDataflowBlockOptions? ApplyCancellationToken(
         ExecutionDataflowBlockOptions? options,
-        CancellationToken defaultCancellationToken)
+        CancellationToken defaultCancellationToken
+    )
     {
         if (defaultCancellationToken == default)
         {
@@ -144,7 +144,8 @@ internal static class DataflowBuilderHelpers
     /// <returns>The modified options, or null if no changes were needed.</returns>
     public static GroupingDataflowBlockOptions? ApplyCancellationToken(
         GroupingDataflowBlockOptions? options,
-        CancellationToken defaultCancellationToken)
+        CancellationToken defaultCancellationToken
+    )
     {
         if (defaultCancellationToken == default)
         {
@@ -176,7 +177,8 @@ internal static class DataflowBuilderHelpers
         Type inputType,
         Type? outputType,
         int index,
-        Action<IDataflowBlock, DataflowLinkOptions>? linkToNext)
+        Action<IDataflowBlock, DataflowLinkOptions>? linkToNext
+    )
     {
         return new BlockDescriptor
         {
@@ -185,7 +187,7 @@ internal static class DataflowBuilderHelpers
             InputType = inputType,
             OutputType = outputType,
             Index = index,
-            LinkToNext = linkToNext
+            LinkToNext = linkToNext,
         };
     }
 
@@ -207,25 +209,31 @@ internal static class DataflowBuilderHelpers
         IDataflowBlock block,
         Type inputType,
         Type? outputType,
-        Action<IDataflowBlock, DataflowLinkOptions>? linkToNext)
+        Action<IDataflowBlock, DataflowLinkOptions>? linkToNext
+    )
     {
         var index = blocks.Count;
         var actualName = name ?? GenerateBlockName(block, index);
 
         if (!blockNames.Add(actualName))
         {
-            throw new ArgumentException($"A block with the name '{actualName}' already exists in the pipeline.", nameof(name));
+            throw new ArgumentException(
+                $"A block with the name '{actualName}' already exists in the pipeline.",
+                nameof(name)
+            );
         }
 
-        blocks.Add(new BlockDescriptor
-        {
-            Name = actualName,
-            Block = block,
-            InputType = inputType,
-            OutputType = outputType,
-            Index = index,
-            LinkToNext = linkToNext
-        });
+        blocks.Add(
+            new BlockDescriptor
+            {
+                Name = actualName,
+                Block = block,
+                InputType = inputType,
+                OutputType = outputType,
+                Index = index,
+                LinkToNext = linkToNext,
+            }
+        );
     }
 
     /// <summary>
@@ -245,7 +253,8 @@ internal static class DataflowBuilderHelpers
     public static void StartChannelPumpingTask<T>(
         ChannelReader<T> reader,
         ITargetBlock<T> target,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         _ = PumpChannelToBlockAsync(reader, target, cancellationToken);
     }
@@ -253,7 +262,8 @@ internal static class DataflowBuilderHelpers
     private static async Task PumpChannelToBlockAsync<T>(
         ChannelReader<T> reader,
         ITargetBlock<T> target,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         try
         {
@@ -286,7 +296,8 @@ internal static class DataflowBuilderHelpers
     /// <returns>A tuple containing the ActionBlock and the ChannelReader.</returns>
     public static (ActionBlock<T> Block, ChannelReader<T> Reader) CreateChannelOutputBlock<T>(
         BoundedChannelOptions? options,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var channel = options is null
             ? Channel.CreateUnbounded<T>()
@@ -296,10 +307,8 @@ internal static class DataflowBuilderHelpers
 
         var actionBlock = new ActionBlock<T>(
             async item => await writer.WriteAsync(item).ConfigureAwait(false),
-            new ExecutionDataflowBlockOptions
-            {
-                CancellationToken = cancellationToken
-            });
+            new ExecutionDataflowBlockOptions { CancellationToken = cancellationToken }
+        );
 
         actionBlock.Completion.ContinueWith(
             task =>
@@ -313,7 +322,8 @@ internal static class DataflowBuilderHelpers
                     writer.Complete();
                 }
             },
-            TaskScheduler.Default);
+            TaskScheduler.Default
+        );
 
         return (actionBlock, channel.Reader);
     }

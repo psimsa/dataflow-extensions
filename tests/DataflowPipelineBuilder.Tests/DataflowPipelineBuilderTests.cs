@@ -9,8 +9,7 @@ public class DataflowPipelineBuilderTests
     [Fact]
     public void AddBufferBlock_CreatesValidBuilder()
     {
-        var builder = new DataflowPipelineBuilder()
-            .AddBufferBlock<int>();
+        var builder = new DataflowPipelineBuilder().AddBufferBlock<int>();
 
         var pipeline = builder.Build();
 
@@ -22,8 +21,7 @@ public class DataflowPipelineBuilderTests
     [Fact]
     public void AddBufferBlock_WithCustomName_UsesProvidedName()
     {
-        var builder = new DataflowPipelineBuilder()
-            .AddBufferBlock<int>("MyBuffer");
+        var builder = new DataflowPipelineBuilder().AddBufferBlock<int>("MyBuffer");
 
         var pipeline = builder.Build();
 
@@ -57,10 +55,7 @@ public class DataflowPipelineBuilderTests
     [Fact]
     public void AddBatchBlock_GroupsItems()
     {
-        var pipeline = new DataflowPipelineBuilder()
-            .AddBufferBlock<int>()
-            .AddBatchBlock(5)
-            .Build();
+        var pipeline = new DataflowPipelineBuilder().AddBufferBlock<int>().AddBatchBlock(5).Build();
 
         pipeline.Should().NotBeNull();
         pipeline.Blocks.Should().HaveCount(2);
@@ -94,25 +89,21 @@ public class DataflowPipelineBuilderTests
     [Fact]
     public void DuplicateBlockName_ThrowsArgumentException()
     {
-        var builder = new DataflowPipelineBuilder()
-            .AddBufferBlock<int>("MyBlock");
+        var builder = new DataflowPipelineBuilder().AddBufferBlock<int>("MyBlock");
 
         var act = () => builder.AddTransformBlock<string>(x => x.ToString(), "MyBlock");
 
-        act.Should().Throw<ArgumentException>()
-            .WithMessage("*MyBlock*already exists*");
+        act.Should().Throw<ArgumentException>().WithMessage("*MyBlock*already exists*");
     }
 
     [Fact]
     public void AddBatchBlock_WithZeroSize_ThrowsArgumentOutOfRangeException()
     {
-        var builder = new DataflowPipelineBuilder()
-            .AddBufferBlock<int>();
+        var builder = new DataflowPipelineBuilder().AddBufferBlock<int>();
 
         var act = () => builder.AddBatchBlock(0);
 
-        act.Should().Throw<ArgumentOutOfRangeException>()
-            .WithMessage("*greater than zero*");
+        act.Should().Throw<ArgumentOutOfRangeException>().WithMessage("*greater than zero*");
     }
 
     [Fact]

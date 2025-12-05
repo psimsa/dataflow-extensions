@@ -9,7 +9,8 @@ namespace Tpl.Dataflow.Builder;
 /// </summary>
 /// <typeparam name="TInput">The input type of the pipeline.</typeparam>
 /// <typeparam name="TOutput">The output type written to the channel.</typeparam>
-internal sealed class DataflowChannelPipeline<TInput, TOutput> : IDataflowChannelPipeline<TInput, TOutput>
+internal sealed class DataflowChannelPipeline<TInput, TOutput>
+    : IDataflowChannelPipeline<TInput, TOutput>
 {
     private readonly ITargetBlock<TInput> _head;
     private readonly IDataflowBlock _tail;
@@ -21,7 +22,8 @@ internal sealed class DataflowChannelPipeline<TInput, TOutput> : IDataflowChanne
         ITargetBlock<TInput> head,
         IDataflowBlock tail,
         IReadOnlyDictionary<string, IDataflowBlock> blocks,
-        ChannelReader<TOutput> output)
+        ChannelReader<TOutput> output
+    )
     {
         _head = head ?? throw new ArgumentNullException(nameof(head));
         _tail = tail ?? throw new ArgumentNullException(nameof(tail));

@@ -10,17 +10,20 @@ Console.WriteLine("-------------------------------------");
 var r = new Random();
 
 await using var transformPipeline = new DataflowPipelineBuilder()
-    .AddBufferBlock<int>(options: new System.Threading.Tasks.Dataflow.DataflowBlockOptions
-    {
-        BoundedCapacity = 100
-    })
-    .AddTransformBlock<string>(async(x) => {
-        await Task.Delay(r.Next(50, 2000));
-        return $"Number: {x}";
-    }, options: new System.Threading.Tasks.Dataflow.ExecutionDataflowBlockOptions
-    {
-        MaxDegreeOfParallelism = 50
-    })
+    .AddBufferBlock<int>(
+        options: new System.Threading.Tasks.Dataflow.DataflowBlockOptions { BoundedCapacity = 100 }
+    )
+    .AddTransformBlock<string>(
+        async (x) =>
+        {
+            await Task.Delay(r.Next(50, 2000));
+            return $"Number: {x}";
+        },
+        options: new System.Threading.Tasks.Dataflow.ExecutionDataflowBlockOptions
+        {
+            MaxDegreeOfParallelism = 50,
+        }
+    )
     .Build();
 
 for (int i = 1; i <= 5; i++)
@@ -51,8 +54,9 @@ await using var asyncPipeline = new DataflowPipelineBuilder()
         },
         options: new System.Threading.Tasks.Dataflow.ExecutionDataflowBlockOptions
         {
-            MaxDegreeOfParallelism = 4
-        })
+            MaxDegreeOfParallelism = 4,
+        }
+    )
     .Build();
 
 var urls = new[] { "url1", "url2", "url3", "url4", "url5" };
@@ -77,8 +81,9 @@ Console.WriteLine("----------------------------");
 await using var batchPipeline = new DataflowPipelineBuilder()
     .AddBufferBlock<int>()
     .AddBatchBlock(batchSize: 3)
-    .AddTransformBlock<string>(
-        batch => $"Batch of {batch.Length} items: [{string.Join(", ", batch)}]")
+    .AddTransformBlock<string>(batch =>
+        $"Batch of {batch.Length} items: [{string.Join(", ", batch)}]"
+    )
     .Build();
 
 for (int i = 1; i <= 10; i++)

@@ -117,11 +117,14 @@ public class ChannelIntegrationTests
 
         channel.Writer.Complete(expectedException);
 
-        var completionException = await Assert.ThrowsAsync<AggregateException>(
-            async () => await pipeline.Completion);
+        var completionException = await Assert.ThrowsAsync<AggregateException>(async () =>
+            await pipeline.Completion
+        );
 
-        Assert.Contains(completionException.Flatten().InnerExceptions,
-            ex => ex.Message == expectedException.Message);
+        Assert.Contains(
+            completionException.Flatten().InnerExceptions,
+            ex => ex.Message == expectedException.Message
+        );
     }
 
     [Fact]
@@ -164,9 +167,7 @@ public class ChannelIntegrationTests
     [Fact]
     public async Task BuildAsChannel_OutputIsIDataflowPipelineOfTInput()
     {
-        var pipeline = new DataflowPipelineBuilder()
-            .AddBufferBlock<int>()
-            .BuildAsChannel();
+        var pipeline = new DataflowPipelineBuilder().AddBufferBlock<int>().BuildAsChannel();
 
         IDataflowPipeline<int> basePipeline = pipeline;
 
@@ -195,9 +196,7 @@ public class ChannelIntegrationTests
     [Fact]
     public async Task BuildAsChannel_CompletesChannelOnPipelineCompletion()
     {
-        var pipeline = new DataflowPipelineBuilder()
-            .AddBufferBlock<int>()
-            .BuildAsChannel();
+        var pipeline = new DataflowPipelineBuilder().AddBufferBlock<int>().BuildAsChannel();
 
         pipeline.Post(1);
         pipeline.Complete();
@@ -237,9 +236,7 @@ public class ChannelIntegrationTests
     [Fact]
     public async Task BuildAsChannel_SupportsSendAsync()
     {
-        var pipeline = new DataflowPipelineBuilder()
-            .AddBufferBlock<int>()
-            .BuildAsChannel();
+        var pipeline = new DataflowPipelineBuilder().AddBufferBlock<int>().BuildAsChannel();
 
         var accepted = await pipeline.SendAsync(42);
         Assert.True(accepted);
@@ -253,9 +250,7 @@ public class ChannelIntegrationTests
     [Fact]
     public async Task BuildAsChannel_CanBeDisposed()
     {
-        var pipeline = new DataflowPipelineBuilder()
-            .AddBufferBlock<int>()
-            .BuildAsChannel();
+        var pipeline = new DataflowPipelineBuilder().AddBufferBlock<int>().BuildAsChannel();
 
         await pipeline.DisposeAsync();
 
@@ -356,7 +351,9 @@ public class ChannelIntegrationTests
     {
         var builder = new DataflowPipelineBuilder();
 
-        Assert.Throws<ArgumentNullException>(() => builder.FromChannelSource<int>((Channel<int>)null!));
+        Assert.Throws<ArgumentNullException>(() =>
+            builder.FromChannelSource<int>((Channel<int>)null!)
+        );
     }
 
     [Fact]
@@ -364,6 +361,8 @@ public class ChannelIntegrationTests
     {
         var builder = new DataflowPipelineBuilder();
 
-        Assert.Throws<ArgumentNullException>(() => builder.FromChannelSource<int>((ChannelReader<int>)null!));
+        Assert.Throws<ArgumentNullException>(() =>
+            builder.FromChannelSource<int>((ChannelReader<int>)null!)
+        );
     }
 }

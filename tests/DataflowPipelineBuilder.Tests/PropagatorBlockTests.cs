@@ -61,7 +61,8 @@ public class PropagatorBlockTests
             .AddCustomBlock(transformer)
             .AddActionBlock(x =>
             {
-                lock (lockObj) results.Add(x);
+                lock (lockObj)
+                    results.Add(x);
             })
             .Build();
 
@@ -101,7 +102,9 @@ public class PropagatorBlockTests
 
         ((IDataflowBlock)multiplier).Fault(expectedException);
 
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () => await multiplier.Completion);
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await multiplier.Completion
+        );
         Assert.Equal(expectedException.Message, ex.Message);
     }
 
@@ -170,9 +173,7 @@ public class PropagatorBlockTests
     private sealed class TestParallelBlock : PropagatorBlock<int, int>
     {
         public TestParallelBlock()
-            : base(new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 4 })
-        {
-        }
+            : base(new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 4 }) { }
 
         public override int Transform(int input) => input * 2;
     }
@@ -180,9 +181,7 @@ public class PropagatorBlockTests
     private sealed class TestSlowBlock : AsyncPropagatorBlock<int, int>
     {
         public TestSlowBlock()
-            : base(new ExecutionDataflowBlockOptions { BoundedCapacity = 1 })
-        {
-        }
+            : base(new ExecutionDataflowBlockOptions { BoundedCapacity = 1 }) { }
 
         public override async Task<int> TransformAsync(int input)
         {
@@ -257,4 +256,3 @@ public class PropagatorBlockTests
         }
     }
 }
-

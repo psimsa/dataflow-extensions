@@ -17,7 +17,8 @@ public sealed class DataflowPipelineBuilder<TInput>
     internal DataflowPipelineBuilder(
         DataflowLinkOptions defaultLinkOptions,
         CancellationToken defaultCancellationToken,
-        List<BlockDescriptor> blocks)
+        List<BlockDescriptor> blocks
+    )
     {
         _defaultLinkOptions = defaultLinkOptions;
         _blocks = blocks;
@@ -32,7 +33,9 @@ public sealed class DataflowPipelineBuilder<TInput>
     {
         if (_blocks.Count == 0)
         {
-            throw new InvalidOperationException("Cannot build an empty pipeline. Add at least one block.");
+            throw new InvalidOperationException(
+                "Cannot build an empty pipeline. Add at least one block."
+            );
         }
 
         DataflowBuilderHelpers.LinkBlocks(_blocks, _defaultLinkOptions);

@@ -9,9 +9,7 @@ public class ServiceProviderIntegrationTests
     [Fact]
     public async Task AddCustomBlock_WithServiceProvider_ResolvesFromDI()
     {
-        var sp = new ServiceCollection()
-            .AddSingleton<TestDoublerBlock>()
-            .BuildServiceProvider();
+        var sp = new ServiceCollection().AddSingleton<TestDoublerBlock>().BuildServiceProvider();
 
         var results = new List<int>();
         var pipeline = new DataflowPipelineBuilder(serviceProvider: sp)
@@ -58,11 +56,11 @@ public class ServiceProviderIntegrationTests
     [Fact]
     public void AddCustomBlock_WithoutServiceProvider_ThrowsInvalidOperationException()
     {
-        var builder = new DataflowPipelineBuilder()
-            .AddBufferBlock<int>();
+        var builder = new DataflowPipelineBuilder().AddBufferBlock<int>();
 
         var ex = Assert.Throws<InvalidOperationException>(() =>
-            builder.AddCustomBlock<TestDoublerBlock, int>());
+            builder.AddCustomBlock<TestDoublerBlock, int>()
+        );
 
         Assert.Contains("no IServiceProvider was configured", ex.Message);
         Assert.Contains(nameof(TestDoublerBlock), ex.Message);
@@ -73,11 +71,11 @@ public class ServiceProviderIntegrationTests
     {
         var sp = new ServiceCollection().BuildServiceProvider();
 
-        var builder = new DataflowPipelineBuilder(serviceProvider: sp)
-            .AddBufferBlock<int>();
+        var builder = new DataflowPipelineBuilder(serviceProvider: sp).AddBufferBlock<int>();
 
         var ex = Assert.Throws<InvalidOperationException>(() =>
-            builder.AddCustomBlock<TestDoublerBlock, int>());
+            builder.AddCustomBlock<TestDoublerBlock, int>()
+        );
 
         Assert.Contains("Unable to resolve service", ex.Message);
         Assert.Contains(nameof(TestDoublerBlock), ex.Message);
@@ -110,9 +108,7 @@ public class ServiceProviderIntegrationTests
     [Fact]
     public async Task ServiceProvider_WorksWithOtherBlockTypes()
     {
-        var sp = new ServiceCollection()
-            .AddSingleton<TestDoublerBlock>()
-            .BuildServiceProvider();
+        var sp = new ServiceCollection().AddSingleton<TestDoublerBlock>().BuildServiceProvider();
 
         var results = new List<int>();
         var pipeline = new DataflowPipelineBuilder(serviceProvider: sp)
@@ -134,9 +130,7 @@ public class ServiceProviderIntegrationTests
     [Fact]
     public async Task AddCustomBlock_WithName_UsesProvidedName()
     {
-        var sp = new ServiceCollection()
-            .AddSingleton<TestDoublerBlock>()
-            .BuildServiceProvider();
+        var sp = new ServiceCollection().AddSingleton<TestDoublerBlock>().BuildServiceProvider();
 
         var pipeline = new DataflowPipelineBuilder(serviceProvider: sp)
             .AddBufferBlock<int>()
@@ -208,11 +202,11 @@ public class ServiceProviderIntegrationTests
     [Fact]
     public void AddKeyedCustomBlock_WithoutServiceProvider_ThrowsInvalidOperationException()
     {
-        var builder = new DataflowPipelineBuilder()
-            .AddBufferBlock<int>();
+        var builder = new DataflowPipelineBuilder().AddBufferBlock<int>();
 
         var ex = Assert.Throws<InvalidOperationException>(() =>
-            builder.AddKeyedCustomBlock<IMultiplierBlock, int>("double"));
+            builder.AddKeyedCustomBlock<IMultiplierBlock, int>("double")
+        );
 
         Assert.Contains("no IServiceProvider was configured", ex.Message);
         Assert.Contains("IMultiplierBlock", ex.Message);
@@ -225,11 +219,11 @@ public class ServiceProviderIntegrationTests
         services.AddKeyedSingleton<IMultiplierBlock, DoublerBlock>("double");
         var sp = services.BuildServiceProvider();
 
-        var builder = new DataflowPipelineBuilder(serviceProvider: sp)
-            .AddBufferBlock<int>();
+        var builder = new DataflowPipelineBuilder(serviceProvider: sp).AddBufferBlock<int>();
 
         var ex = Assert.Throws<InvalidOperationException>(() =>
-            builder.AddKeyedCustomBlock<IMultiplierBlock, int>("nonexistent"));
+            builder.AddKeyedCustomBlock<IMultiplierBlock, int>("nonexistent")
+        );
 
         Assert.Contains("Unable to resolve keyed service", ex.Message);
         Assert.Contains("IMultiplierBlock", ex.Message);
@@ -261,11 +255,11 @@ public class ServiceProviderIntegrationTests
         var services = new ServiceCollection();
         var sp = services.BuildServiceProvider();
 
-        var builder = new DataflowPipelineBuilder(serviceProvider: sp)
-            .AddBufferBlock<int>();
+        var builder = new DataflowPipelineBuilder(serviceProvider: sp).AddBufferBlock<int>();
 
         Assert.Throws<ArgumentNullException>(() =>
-            builder.AddKeyedCustomBlock<IMultiplierBlock, int>(null!));
+            builder.AddKeyedCustomBlock<IMultiplierBlock, int>(null!)
+        );
     }
 
     #region Custom Block as First Block Tests
@@ -273,9 +267,7 @@ public class ServiceProviderIntegrationTests
     [Fact]
     public async Task AddCustomBlock_AsFirstBlock_WithServiceProvider_ResolvesFromDI()
     {
-        var sp = new ServiceCollection()
-            .AddSingleton<TestDoublerBlock>()
-            .BuildServiceProvider();
+        var sp = new ServiceCollection().AddSingleton<TestDoublerBlock>().BuildServiceProvider();
 
         var results = new List<int>();
         var pipeline = new DataflowPipelineBuilder(serviceProvider: sp)
@@ -322,7 +314,8 @@ public class ServiceProviderIntegrationTests
         var builder = new DataflowPipelineBuilder();
 
         var ex = Assert.Throws<InvalidOperationException>(() =>
-            builder.AddCustomBlock<TestDoublerBlock, int, int>());
+            builder.AddCustomBlock<TestDoublerBlock, int, int>()
+        );
 
         Assert.Contains("no IServiceProvider was configured", ex.Message);
         Assert.Contains(nameof(TestDoublerBlock), ex.Message);
@@ -336,7 +329,8 @@ public class ServiceProviderIntegrationTests
         var builder = new DataflowPipelineBuilder(serviceProvider: sp);
 
         var ex = Assert.Throws<InvalidOperationException>(() =>
-            builder.AddCustomBlock<TestDoublerBlock, int, int>());
+            builder.AddCustomBlock<TestDoublerBlock, int, int>()
+        );
 
         Assert.Contains("Unable to resolve service", ex.Message);
         Assert.Contains(nameof(TestDoublerBlock), ex.Message);
@@ -369,7 +363,8 @@ public class ServiceProviderIntegrationTests
         var builder = new DataflowPipelineBuilder();
 
         var ex = Assert.Throws<InvalidOperationException>(() =>
-            builder.AddKeyedCustomBlock<IMultiplierBlock, int, int>("double"));
+            builder.AddKeyedCustomBlock<IMultiplierBlock, int, int>("double")
+        );
 
         Assert.Contains("no IServiceProvider was configured", ex.Message);
         Assert.Contains("IMultiplierBlock", ex.Message);
@@ -385,7 +380,8 @@ public class ServiceProviderIntegrationTests
         var builder = new DataflowPipelineBuilder(serviceProvider: sp);
 
         var ex = Assert.Throws<InvalidOperationException>(() =>
-            builder.AddKeyedCustomBlock<IMultiplierBlock, int, int>("nonexistent"));
+            builder.AddKeyedCustomBlock<IMultiplierBlock, int, int>("nonexistent")
+        );
 
         Assert.Contains("Unable to resolve keyed service", ex.Message);
         Assert.Contains("IMultiplierBlock", ex.Message);
@@ -401,7 +397,8 @@ public class ServiceProviderIntegrationTests
         var builder = new DataflowPipelineBuilder(serviceProvider: sp);
 
         Assert.Throws<ArgumentNullException>(() =>
-            builder.AddKeyedCustomBlock<IMultiplierBlock, int, int>(null!));
+            builder.AddKeyedCustomBlock<IMultiplierBlock, int, int>(null!)
+        );
     }
 
     [Fact]
@@ -430,7 +427,8 @@ public class ServiceProviderIntegrationTests
         var builder = new DataflowPipelineBuilder();
 
         Assert.Throws<ArgumentNullException>(() =>
-            builder.AddCustomBlock<int, int>((IPropagatorBlock<int, int>)null!));
+            builder.AddCustomBlock<int, int>((IPropagatorBlock<int, int>)null!)
+        );
     }
 
     [Fact]
@@ -458,7 +456,8 @@ public class ServiceProviderIntegrationTests
         var builder = new DataflowPipelineBuilder();
 
         Assert.Throws<ArgumentNullException>(() =>
-            builder.AddCustomBlock<int, int>((Func<IPropagatorBlock<int, int>>)null!));
+            builder.AddCustomBlock<int, int>((Func<IPropagatorBlock<int, int>>)null!)
+        );
     }
 
     [Fact]
@@ -563,6 +562,7 @@ public class ServiceProviderIntegrationTests
     public sealed class TestLogger
     {
         public List<string> Messages { get; } = [];
+
         public void Log(string message) => Messages.Add(message);
     }
 }

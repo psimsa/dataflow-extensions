@@ -17,7 +17,8 @@ internal sealed class DataflowPipeline<TInput> : IDataflowPipeline<TInput>
     public DataflowPipeline(
         ITargetBlock<TInput> head,
         IDataflowBlock tail,
-        IReadOnlyDictionary<string, IDataflowBlock> blocks)
+        IReadOnlyDictionary<string, IDataflowBlock> blocks
+    )
     {
         _head = head ?? throw new ArgumentNullException(nameof(head));
         _tail = tail ?? throw new ArgumentNullException(nameof(tail));

@@ -19,16 +19,16 @@ namespace Tpl.Dataflow.Builder.Abstractions;
 /// public class MyAsyncExpander : AsyncPropagatorManyBlock&lt;int, string&gt;
 /// {
 ///     private readonly HttpClient _httpClient;
-///     
+///
 ///     public MyAsyncExpander(HttpClient httpClient) => _httpClient = httpClient;
-///     
+///
 ///     protected override async Task&lt;IEnumerable&lt;string&gt;&gt; TransformAsync(int input)
 ///     {
 ///         var response = await _httpClient.GetStringAsync($"https://api.example.com/items/{input}");
 ///         return JsonSerializer.Deserialize&lt;string[]&gt;(response) ?? [];
 ///     }
 /// }
-/// 
+///
 /// // Usage in pipeline:
 /// var pipeline = new DataflowPipelineBuilder()
 ///     .AddBufferBlock&lt;int&gt;()
@@ -37,7 +37,9 @@ namespace Tpl.Dataflow.Builder.Abstractions;
 ///     .Build();
 /// </code>
 /// </example>
-public abstract class AsyncPropagatorManyBlock<TInput, TOutput> : IPropagatorBlock<TInput, TOutput>, IReceivableSourceBlock<TOutput>
+public abstract class AsyncPropagatorManyBlock<TInput, TOutput>
+    : IPropagatorBlock<TInput, TOutput>,
+        IReceivableSourceBlock<TOutput>
 {
     private readonly TransformManyBlock<TInput, TOutput> _innerBlock;
 
@@ -46,9 +48,7 @@ public abstract class AsyncPropagatorManyBlock<TInput, TOutput> : IPropagatorBlo
     /// with default options.
     /// </summary>
     protected AsyncPropagatorManyBlock()
-        : this(new ExecutionDataflowBlockOptions())
-    {
-    }
+        : this(new ExecutionDataflowBlockOptions()) { }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AsyncPropagatorManyBlock{TInput, TOutput}"/> class
@@ -93,8 +93,8 @@ public abstract class AsyncPropagatorManyBlock<TInput, TOutput> : IPropagatorBlo
     /// <param name="target">The target block to link to.</param>
     /// <param name="linkOptions">Options for the link.</param>
     /// <returns>An IDisposable that can be used to unlink the blocks.</returns>
-    public IDisposable LinkTo(ITargetBlock<TOutput> target, DataflowLinkOptions linkOptions)
-        => _innerBlock.LinkTo(target, linkOptions);
+    public IDisposable LinkTo(ITargetBlock<TOutput> target, DataflowLinkOptions linkOptions) =>
+        _innerBlock.LinkTo(target, linkOptions);
 
     /// <summary>
     /// Implement this method to provide asynchronous one-to-many transformation logic.
@@ -104,35 +104,48 @@ public abstract class AsyncPropagatorManyBlock<TInput, TOutput> : IPropagatorBlo
     public abstract Task<IEnumerable<TOutput>> TransformAsync(TInput input);
 
     /// <inheritdoc/>
-    public bool TryReceive(Predicate<TOutput>? filter, [MaybeNullWhen(false)] out TOutput item) => _innerBlock.TryReceive(filter, out item);
+    public bool TryReceive(Predicate<TOutput>? filter, [MaybeNullWhen(false)] out TOutput item) =>
+        _innerBlock.TryReceive(filter, out item);
 
     /// <inheritdoc/>
-    public bool TryReceiveAll([NotNullWhen(true)] out IList<TOutput>? items) => _innerBlock.TryReceiveAll(out items);
+    public bool TryReceiveAll([NotNullWhen(true)] out IList<TOutput>? items) =>
+        _innerBlock.TryReceiveAll(out items);
 
     #region Explicit IPropagatorBlock Implementation
 
     TOutput? ISourceBlock<TOutput>.ConsumeMessage(
         DataflowMessageHeader messageHeader,
         ITargetBlock<TOutput> target,
-        out bool messageConsumed)
-        => ((ISourceBlock<TOutput>)_innerBlock).ConsumeMessage(messageHeader, target, out messageConsumed);
+        out bool messageConsumed
+    ) =>
+        ((ISourceBlock<TOutput>)_innerBlock).ConsumeMessage(
+            messageHeader,
+            target,
+            out messageConsumed
+        );
 
     DataflowMessageStatus ITargetBlock<TInput>.OfferMessage(
         DataflowMessageHeader messageHeader,
         TInput messageValue,
         ISourceBlock<TInput>? source,
-        bool consumeToAccept)
-        => ((ITargetBlock<TInput>)_innerBlock).OfferMessage(messageHeader, messageValue, source, consumeToAccept);
+        bool consumeToAccept
+    ) =>
+        ((ITargetBlock<TInput>)_innerBlock).OfferMessage(
+            messageHeader,
+            messageValue,
+            source,
+            consumeToAccept
+        );
 
     void ISourceBlock<TOutput>.ReleaseReservation(
         DataflowMessageHeader messageHeader,
-        ITargetBlock<TOutput> target)
-        => ((ISourceBlock<TOutput>)_innerBlock).ReleaseReservation(messageHeader, target);
+        ITargetBlock<TOutput> target
+    ) => ((ISourceBlock<TOutput>)_innerBlock).ReleaseReservation(messageHeader, target);
 
     bool ISourceBlock<TOutput>.ReserveMessage(
         DataflowMessageHeader messageHeader,
-        ITargetBlock<TOutput> target)
-        => ((ISourceBlock<TOutput>)_innerBlock).ReserveMessage(messageHeader, target);
+        ITargetBlock<TOutput> target
+    ) => ((ISourceBlock<TOutput>)_innerBlock).ReserveMessage(messageHeader, target);
 
     #endregion
 }
